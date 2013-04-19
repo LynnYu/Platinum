@@ -204,6 +204,7 @@ PLT_DeviceHost::Start(PLT_SsdpListenTask* task)
         repeat, 
         m_ByeByeFirst, 
         m_Broadcast);
+	NPT_LOG_INFO("==== Starting PLT_SsdpDeviceAnnounceTask ====");
     m_TaskManager.StartTask(announce_task, &delay);
 
     // register ourselves as a listener for ssdp requests
@@ -740,7 +741,9 @@ PLT_DeviceHost::OnSsdpPacket(const NPT_HttpRequest&        request,
         // create a task to respond to the request
         NPT_TimeInterval timer((mx==0)?0.:(double)(NPT_System::GetRandomInteger()%(mx>10?10:mx)));
         PLT_SsdpDeviceSearchResponseTask* task = new PLT_SsdpDeviceSearchResponseTask(this, context.GetRemoteAddress(), *st);
-        m_TaskManager.StartTask(task, &timer);
+        
+		NPT_LOG_INFO("==== Starting PLT_SsdpDeviceSearchResponseTask ====");
+		m_TaskManager.StartTask(task, &timer);
         return NPT_SUCCESS;
     }
 

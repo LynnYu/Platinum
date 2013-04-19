@@ -275,6 +275,7 @@ PLT_CtrlPoint::Start(PLT_SsdpListenTask* task)
     m_EventHttpServer->Start();
 
     // house keeping task
+	NPT_LOG_INFO("==== Starting PLT_CtrlPointHouseKeepingTask ====");
     m_TaskManager.StartTask(new PLT_CtrlPointHouseKeepingTask(this));
 
     task->AddListener(this);
@@ -419,7 +420,8 @@ PLT_CtrlPoint::Search(const NPT_HttpUrl& url,
                 mx, 
                 frequency,
                 (*net_if_addr).GetPrimaryAddress());
-            m_TaskManager.StartTask(task, &initial_delay);
+			NPT_LOG_INFO("==== Starting PLT_SsdpSearchTask ====");
+            m_TaskManager.StartTask(task, &initial_delay, "PLT_SsdpSearchTask");
         }
     }
 
@@ -459,6 +461,7 @@ PLT_CtrlPoint::Discover(const NPT_HttpUrl& url,
         this, 
         request,
         frequency.ToMillis()<mx*5000?NPT_TimeInterval(mx*5.):frequency);  /* repeat no less than every 5 secs */
+	NPT_LOG_INFO("==== Starting PLT_SsdpSearchTask ====");
     return m_TaskManager.StartTask(task);
 }
 
@@ -1172,6 +1175,8 @@ PLT_CtrlPoint::InspectDevice(const NPT_HttpUrl& location,
 
     // Add a delay to make sure that we received late NOTIFY bye-bye
     NPT_TimeInterval delay(.5f);
+	
+	NPT_LOG_INFO("==== Starting PLT_CtrlPointGetDescriptionTask ====");
     m_TaskManager.StartTask(task, &delay);
 
     return NPT_SUCCESS;
@@ -1266,6 +1271,7 @@ PLT_CtrlPoint::ProcessGetDescriptionResponse(NPT_Result                    res,
         // not all been received yet which would cause to remove the devices
         // as we're adding them
         if (root_device->m_EmbeddedDevices.GetItemCount() > 0) delay = 1.f;
+		NPT_LOG_INFO("==== Starting PLT_CtrlPointGetSCPDTask ====");
         m_TaskManager.StartTask(task, &delay);
     }
 
@@ -1396,6 +1402,7 @@ PLT_CtrlPoint::RenewSubscriber(PLT_EventSubscriber& subscriber)
         this, 
         root_device,
         subscriber.GetService());
+	NPT_LOG_INFO("==== Starting PLT_CtrlPointSubscribeEventTask ====");
     return m_TaskManager.StartTask(task);
 }
 
@@ -1490,6 +1497,8 @@ PLT_CtrlPoint::Subscribe(PLT_Service* service,
 		root_device,
         service, 
         userdata);
+
+	NPT_LOG_INFO("==== Starting PLT_CtrlPointSubscribeEventTask ====");
     m_TaskManager.StartTask(task);
 
     return NPT_SUCCESS;
@@ -1612,6 +1621,7 @@ PLT_CtrlPoint::InvokeAction(PLT_ActionReference& action,
         userdata);
 
     // queue the request
+	NPT_LOG_INFO_1("==== Starting PLT_CtrlPointInvokeActionTask %s ====", action_name);
     m_TaskManager.StartTask(task);
 
     return NPT_SUCCESS;
@@ -1644,6 +1654,8 @@ PLT_CtrlPoint::ProcessActionResponse(NPT_Result           res,
     if (NPT_FAILED(res) || response == NULL) {
         goto failure;
     }
+
+	NPT_LOG_INFO_1("ProcessActionResponse for Action %s:", action_desc.GetName());
 
     NPT_LOG_FINE("Received Action Response:");
     PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINER, response);

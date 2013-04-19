@@ -37,11 +37,115 @@
 #include "PltMicroMediaController.h"
 #include "PltLeaks.h"
 
+#include <string>
+
 #include <stdio.h>
-#include <string.h>
+//#include <string.h>
 #include <stdlib.h>
 
+#include <windows.h>
+#include <assert.h>
+
 //NPT_SET_LOCAL_LOGGER("platinum.tests.micromediacontroller")
+
+
+/*----------------------------------------------------------------------
+|   MByteToWChar
++---------------------------------------------------------------------*/
+int MByteToWChar(UINT CodePage, LPCSTR lpMultiByteStr, LPWSTR& lpWideCharStr)
+{
+	int cchWideChar = 0;
+	int cch = MultiByteToWideChar(CodePage, 0, lpMultiByteStr, -1, NULL, 0);
+	if (cch>0)
+	{
+		lpWideCharStr = new wchar_t[cch+1];
+		if (lpWideCharStr != NULL)
+		{
+			cchWideChar = MultiByteToWideChar(CodePage, 0, lpMultiByteStr, -1, lpWideCharStr, cch);
+		}
+	}
+	return cchWideChar;
+}
+
+/*----------------------------------------------------------------------
+|   WCharToMByte
++---------------------------------------------------------------------*/
+int WCharToMByte(UINT CodePage, LPCWSTR lpWideCharStr, LPSTR& lpMultiByte)
+{
+	int cbMultiByte = 0;
+	int cb = WideCharToMultiByte(CodePage, 0, lpWideCharStr, -1, NULL, 0, NULL, NULL);
+	if (cb>0)
+	{
+		lpMultiByte = new char[cb];
+		if (lpMultiByte != NULL)
+		{
+			cbMultiByte = WideCharToMultiByte(CodePage, 0, lpWideCharStr, -1, lpMultiByte, cb, NULL, NULL);
+		}
+	}
+	return cbMultiByte;
+}
+
+/*----------------------------------------------------------------------
+|   MByteToWChar
++---------------------------------------------------------------------*/
+std::wstring MByteToWChar(int CodePage, const std::string& strMultiBytes)
+{
+	std::wstring wstrWideChars;
+	int cch = MultiByteToWideChar(CodePage, 0, strMultiBytes.c_str(), -1, NULL, 0);
+	if (cch > 0)
+	{
+		wchar_t* wchars = new wchar_t[cch+1];
+		if (wchars)
+		{
+			if (cch == MultiByteToWideChar(CodePage, 0, strMultiBytes.c_str(), -1, wchars, cch))
+			{
+				wstrWideChars.assign(wchars, cch);
+			}
+			delete[] wchars;
+		}
+	}
+	return wstrWideChars;
+}
+
+/*----------------------------------------------------------------------
+|   WCharToMByte
++---------------------------------------------------------------------*/
+std::string WCharToMByte(int CodePage, const std::wstring& wstrWideChars)
+{
+	std::string strMultiBytes;
+	int cb = WideCharToMultiByte(CodePage, 0, wstrWideChars.c_str(), -1, NULL, 0, NULL, NULL);
+	if (cb > 0)
+	{
+		char* mbytes = new char[cb];
+		if (mbytes != NULL)
+		{
+			if (cb == WideCharToMultiByte(CodePage, 0, wstrWideChars.c_str(), -1, mbytes, cb, NULL, NULL))
+			{
+				strMultiBytes.assign(mbytes, cb);
+			}
+			delete[] mbytes;
+		}
+	}
+	return strMultiBytes;
+}
+
+
+/*----------------------------------------------------------------------
+|   Utf8ToAscii
++---------------------------------------------------------------------*/
+int UTF8ToASCII(const char* lpUtf8Str, char*& lpAsciiStr)
+{
+	int cbAscii = 0;
+	LPWSTR lpUnicodeStr = NULL;
+	int cchWideChar = MByteToWChar(CP_UTF8, lpUtf8Str, lpUnicodeStr);
+	//int cchWideChar = MultiByteToWideChar(CP_UTF8, 0, lpUtf8Str, -1, NULL, 0);
+	if (cchWideChar>0)
+	{
+		cbAscii = WCharToMByte(CP_ACP, lpUnicodeStr, lpAsciiStr);
+	}
+	return cbAscii;
+}
+
 
 /*----------------------------------------------------------------------
 |   PLT_MicroMediaController::PLT_MicroMediaController
@@ -281,6 +385,24 @@ PLT_MicroMediaController::DoBrowse(const char* object_id, /* = NULL */
             m_MostRecentBrowseResults, 
             metadata);		
     }
+
+	// convert title text-encoding from utf8 to ascii
+	if (!m_MostRecentBrowseResults.IsNull()) {
+		NPT_List<PLT_MediaObject*>::Iterator item = m_MostRecentBrowseResults->GetFirstItem();
+		while (item) {
+			char* title = NULL;
+			char* object_id = NULL;
+			int title_size = UTF8ToASCII((*item)->m_Title.GetChars(), title);
+			int object_id_size = UTF8ToASCII((*item)->m_ObjectID.GetChars(), object_id);
+			if (title_size > 0)
+				(*item)->m_Title.Assign(title, title_size);
+			if (object_id_size > 0)
+				(*item)->m_ObjectID.Assign(object_id, object_id_size);
+			delete title;
+			delete object_id;
+			++item;
+		}
+	}
 
     return res;
 }
@@ -606,6 +728,19 @@ PLT_MicroMediaController::HandleCmd_play()
 }
 
 /*----------------------------------------------------------------------
+|   PLT_MicroMediaController::HandleCmd_pause
++---------------------------------------------------------------------*/
+void
+PLT_MicroMediaController::HandleCmd_pause()
+{
+	PLT_DeviceDataReference device;
+	GetCurMediaRenderer(device);
+	if (!device.IsNull()) {
+		Pause(device, 0, NULL);
+	}
+}
+
+/*----------------------------------------------------------------------
 |   PLT_MicroMediaController::HandleCmd_seek
 +---------------------------------------------------------------------*/
 void
@@ -741,6 +876,8 @@ PLT_MicroMediaController::ProcessCommandLoop()
             HandleCmd_open();
         } else if (0 == strcmp(command, "play")) {
             HandleCmd_play();
+		} else if (0 == strcmp(command, "pause")) {
+			HandleCmd_pause();
         } else if (0 == strcmp(command, "stop")) {
             HandleCmd_stop();
         } else if (0 == strncmp(command, "seek", 4)) {

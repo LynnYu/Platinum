@@ -36,6 +36,7 @@
 |   includes
 +---------------------------------------------------------------------*/
 #include <stdarg.h>
+#include <windows.h>
 
 #include "NptLogging.h"
 #include "NptList.h"
@@ -345,9 +346,17 @@ NPT_Log::FormatRecordToStream(const NPT_LogRecord& record,
         stream.Write("] ", 2, NULL);
     }
     if ((format_filter & NPT_LOG_FORMAT_FILTER_NO_TIMESTAMP) == 0) {
-        NPT_String ts = NPT_DateTime(record.m_TimeStamp, true).ToString(NPT_DateTime::FORMAT_W3C, 
-                                                                        NPT_DateTime::FLAG_EMIT_FRACTION | 
-                                                                        NPT_DateTime::FLAG_EXTENDED_PRECISION);
+//         NPT_String ts = NPT_DateTime(record.m_TimeStamp, true).ToString(NPT_DateTime::FORMAT_W3C, 
+//                                                                         NPT_DateTime::FLAG_EMIT_FRACTION | 
+//                                                                         NPT_DateTime::FLAG_EXTENDED_PRECISION);
+		SYSTEMTIME st;
+		::GetLocalTime(&st);
+		
+		NPT_String ts;
+		ts.SetLength(14);
+		NPT_FormatString(ts.UseChars(), ts.GetLength()+1, 
+			"[%02d:%02d:%02d.%03d]", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+
         stream.WriteString(ts.GetChars());
         stream.Write(" ", 1);
     }

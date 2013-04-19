@@ -1399,9 +1399,12 @@ NPT_BsdUdpSocket::Send(const NPT_DataBuffer&    packet,
         SocketAddressToInetAddress(*address, &inet_address);
         
         // send the data
-        NPT_LOG_FINEST_2("sending datagram to %lx port %d",
-                         address->GetIpAddress().AsLong(),
-                         address->GetPort());
+//         NPT_LOG_FINEST_2("sending datagram to %lx port %d",
+//                          address->GetIpAddress().AsLong(),
+//                          address->GetPort());
+		NPT_LOG_FINEST_2("sending datagram to %s port %d",
+			address->GetIpAddress().ToString(),
+			address->GetPort());
         io_result = sendto(m_SocketFdReference->m_SocketFd, 
                            (SocketConstBuffer)buffer, 
                            buffer_length, 
@@ -1612,8 +1615,10 @@ NPT_BsdUdpMulticastSocket::JoinGroup(const NPT_IpAddress& group,
     mreq.imr_multiaddr.s_addr = htonl(group.AsLong());
 
     // set socket option
-    NPT_LOG_FINE_2("joining multicast addr %lx group %lx", 
-                   iface.AsLong(), group.AsLong());
+//     NPT_LOG_FINE_2("joining multicast addr %lx group %lx", 
+//                    iface.AsLong(), group.AsLong());
+	NPT_LOG_FINE_2("joining multicast addr %s group %s", 
+		iface.ToString(), group.ToString());
     int io_result = setsockopt(m_SocketFdReference->m_SocketFd, 
                                IPPROTO_IP, IP_ADD_MEMBERSHIP, 
                                (SocketOption)&mreq, sizeof(mreq));
@@ -1690,7 +1695,8 @@ NPT_BsdUdpMulticastSocket::SetInterface(const NPT_IpAddress& iface)
     iface_addr.s_addr = htonl(iface.AsLong());
 
     // set socket option
-    NPT_LOG_FINE_1("setting multicast interface %lx", iface.AsLong()); 
+    //NPT_LOG_FINE_1("setting multicast interface %lx", iface.AsLong()); 
+	NPT_LOG_FINE_1("setting multicast interface %s", iface.ToString()); 
     int io_result = setsockopt(m_SocketFdReference->m_SocketFd, 
                                IPPROTO_IP, IP_MULTICAST_IF, 
                                (char*)&iface_addr, sizeof(iface_addr));

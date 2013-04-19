@@ -161,6 +161,7 @@ PLT_UPnP::Start()
 
     /* create the ssdp listener */
     m_SsdpListenTask = new PLT_SsdpListenTask(socket, m_Multicast, true);
+	NPT_LOG_INFO("==== Starting PLT_SsdpListenTask ====");
     NPT_CHECK_SEVERE(m_TaskManager.StartTask(m_SsdpListenTask));
 
     /* start devices & ctrlpoints */

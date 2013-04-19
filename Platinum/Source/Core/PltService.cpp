@@ -608,6 +608,7 @@ PLT_Service::ProcessNewSubscription(PLT_TaskManager*         task_manager,
         // schedule a recurring event notification task if not running already
         if (!m_EventTask) {
             m_EventTask = new PLT_ServiceEventTask(this);
+			NPT_LOG_INFO("==== Starting PLT_ServiceEventTask ====");
             task_manager->StartTask(m_EventTask);
         }
 

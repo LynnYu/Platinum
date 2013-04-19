@@ -115,6 +115,7 @@ private:
     void    HandleCmd_setmr();
     void    HandleCmd_open();
     void    HandleCmd_play();
+	void	HandleCmd_pause();
     void    HandleCmd_seek(const char* command);
     void    HandleCmd_stop();
     void    HandleCmd_mute();

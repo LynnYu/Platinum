@@ -252,6 +252,8 @@ PLT_EventSubscriber::Notify(NPT_List<PLT_StateVariable*>& vars)
         // before our first NOTIFY. Also make sure task is not auto-destroy
         // since we want to destroy it manually when the subscriber goes away.
         NPT_TimeInterval delay(0.2f);
+
+		NPT_LOG_INFO("==== Starting PLT_HttpClientSocketTask ====");
         NPT_CHECK_FATAL(m_TaskManager->StartTask(m_SubscriberTask, &delay, false));
     } else {
         m_SubscriberTask->AddRequest(request);

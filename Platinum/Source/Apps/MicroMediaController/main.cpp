@@ -53,12 +53,21 @@
 /*----------------------------------------------------------------------
 |   main
 +---------------------------------------------------------------------*/
+
+#define NPT_LOG_FORMAT_FILTER_NO_SOURCE         1
+#define NPT_LOG_FORMAT_FILTER_NO_TIMESTAMP      2
+#define NPT_LOG_FORMAT_FILTER_NO_FUNCTION_NAME  4
+#define NPT_LOG_FORMAT_FILTER_NO_LOGGER_NAME    8
+#define NPT_LOG_FORMAT_FILTER_NO_SOURCEPATH    16
+#define NPT_LOG_FORMAT_FILTER_NO_THREAD_ID     32
+
 int main(void)
 {
     // setup Neptune logging
-    NPT_LogManager::GetDefault().Configure("plist:.level=INFO;.handlers=ConsoleHandler;.ConsoleHandler.colors=off;.ConsoleHandler.filter=42");
-
-    // Create upnp engine
+    //NPT_LogManager::GetDefault().Configure("plist:.level=INFO;.handlers=ConsoleHandler;.ConsoleHandler.colors=off;.ConsoleHandler.filter=42");
+	NPT_LogManager::GetDefault().Configure("plist:.level=ALL;.handlers=FileHandler;.FileHandler.filename=C:\\log\\dlna.log;.FileHandler.filter=9;.FileHandler.append=false");
+    
+	// Create upnp engine
     PLT_UPnP upnp;
     
 #ifdef SIMULATE_XBOX_360
@@ -78,10 +87,12 @@ int main(void)
     // Create controller
     PLT_MicroMediaController controller(ctrlPoint);
 
+#define HAS_SERVER
+
 #ifdef HAS_SERVER
     // create device
     PLT_DeviceHostReference server(
-        new PLT_FileMediaServer("C:\\Music", 
+        new PLT_FileMediaServer("Z:\\Shared\\Media", 
                                 "Platinum UPnP Media Server"));
 
     server->m_ModelDescription = "Platinum File Media Server";
@@ -91,11 +102,15 @@ int main(void)
     server->m_Manufacturer = "Plutinosoft";
     server->m_ManufacturerURL = "http://www.plutinosoft.com/";
 
+
     // add device
-    upnp.AddDevice(server);
+    NPT_Result res = upnp.AddDevice(server);
+
+	NPT_String uuid = server->GetUUID();
 
     // remove device uuid from ctrlpoint
-    ctrlPoint->IgnoreUUID(server->GetUUID());
+    //ctrlPoint->IgnoreUUID(server->GetUUID());
+	upnp.SetIgnoreLocalUUIDs(false);
 #endif
 
     // add control point to upnp engine and start it

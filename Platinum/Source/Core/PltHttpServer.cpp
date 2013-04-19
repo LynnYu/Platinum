@@ -105,6 +105,8 @@ PLT_HttpServer::Start()
     
     // start a task to listen
     m_HttpListenTask = new PLT_HttpListenTask(this, &m_Socket, false);
+	
+	NPT_LOG_INFO("=== Starting PLT_HttpListenTask ====");
     m_TaskManager->StartTask(m_HttpListenTask, NULL, false);
 
     NPT_SocketInfo info;

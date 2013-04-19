@@ -247,6 +247,9 @@ PLT_HttpHelper::ParseBody(const NPT_HttpMessage& message,
     NPT_String body;
     NPT_CHECK_WARNING(GetBody(message, body));
 
+	//PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_INFO, (NPT_HttpResponse*)&message);
+	NPT_LOG_INFO_1("GetBody:%s", body);
+
     // parse body
     NPT_XmlParser parser;
     NPT_XmlNode*  node;

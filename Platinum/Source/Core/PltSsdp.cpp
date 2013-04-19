@@ -177,9 +177,13 @@ PLT_SsdpDeviceSearchResponseInterfaceIterator::operator()(NPT_NetworkInterface*&
     PLT_UPnPMessageHelper::SetServer(response, NPT_HttpServer::m_ServerHeader, false);
     response.GetHeaders().SetHeader("EXT", "");
 
-    // process search response twice to be NMPR compliant
+	// process search response twice to be DLNA compliant
 #if defined(PLATINUM_UPNP_SPECS_STRICT)
-    NPT_CHECK_SEVERE(m_Device->SendSsdpSearchResponse(response, socket, m_ST, remote_addr));
+	{
+		//NPT_UdpSocket socket;
+		NPT_CHECK_SEVERE(m_Device->SendSsdpSearchResponse(response, socket, m_ST, remote_addr));
+	}
+	NPT_System::Sleep(NPT_TimeInterval(PLT_DLNA_SSDP_DELAY_GROUP));
 #endif
     NPT_CHECK_SEVERE(m_Device->SendSsdpSearchResponse(response, socket, m_ST, remote_addr));
 
@@ -248,7 +252,12 @@ PLT_SsdpAnnounceInterfaceIterator::operator()(NPT_NetworkInterface*& net_if) con
     }
 
     NPT_CHECK_SEVERE(m_Device->Announce(req, *socket, m_IsByeBye));
-    NPT_CHECK_SEVERE(m_Device->Announce(req, *socket, m_IsByeBye));
+    
+#if defined(PLATINUM_UPNP_SPECS_STRICT)
+	// delay alive only as we don't want to delay when stopping
+	if (!m_IsByeBye) NPT_System::Sleep(NPT_TimeInterval(PLT_DLNA_SSDP_DELAY_GROUP));
+	NPT_CHECK_SEVERE(m_Device->Announce(req, *socket, m_IsByeBye));
+#endif
 
     return NPT_SUCCESS;
 }
