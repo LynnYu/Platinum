@@ -17,6 +17,7 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
+| licensing@plutinosoft.com
 | 
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -73,13 +74,45 @@ cross-platform logging system.
 #include "PltDeviceData.h"
 #include "PltHttpServer.h"
 #include "PltVersion.h"
-#include "PltSvnVersion.h"
 
-#ifdef PLT_DEVICE_HEADERS_INCLUDE
+#include "PltMimeType.h"
+#include "PltProtocolInfo.h"
+#include "PltAction.h"
+#include "PltArgument.h"
+#include "PltConstants.h"
+#include "PltCtrlPointTask.h"
+#include "PltDatagramStream.h"
+#include "PltDeviceHost.h"
+#include "PltEvent.h"
+#include "PltHttp.h"
+#include "PltHttpClientTask.h"
+#include "PltHttpServer.h"
+#include "PltHttpServerTask.h"
+#include "PltService.h"
+#include "PltSsdp.h"
+#include "PltStateVariable.h"
+#include "PltTaskManager.h"
+#include "PltThreadTask.h"
+#include "PltUtilities.h"
+
 #include "PltMediaServer.h"
 #include "PltMediaBrowser.h"
 #include "PltMediaRenderer.h"
 #include "PltMediaController.h"
-#endif
+#include "PltDidl.h"
+#include "PltFileMediaServer.h"
+#include "PltMediaCache.h"
+#include "PltMediaItem.h"
+#include "PltSyncMediaBrowser.h"
+
+#include "PltXbox360.h"
+#include "PltMediaConnect.h"
+
+#include "PltDownloader.h"
+#include "PltStreamPump.h"
+#include "PltFrameBuffer.h"
+#include "PltFrameServer.h"
+#include "PltFrameStream.h"
+#include "PltRingBufferStream.h"
 
 #endif /* _PLATINUM_H_ */

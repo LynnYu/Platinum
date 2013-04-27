@@ -72,16 +72,14 @@ NPT_System::GetProcessId(NPT_UInt32& id)
     return NPT_SUCCESS;
 }
 
-#if !defined(__APPLE__)
 /*----------------------------------------------------------------------
 |   NPT_System::GetMachineName
 +---------------------------------------------------------------------*/
 NPT_Result
 NPT_System::GetMachineName(NPT_String& name)
 {
-    return NPT_GetEnvironment("USER", name);
+    return NPT_GetSystemMachineName(name);
 }
-#endif
 
 /*----------------------------------------------------------------------
 |   NPT_System::GetCurrentTimeStamp
@@ -122,7 +120,10 @@ NPT_System::Sleep(const NPT_TimeInterval& duration)
     do {
         result = nanosleep(&time_req, &time_rem);
         time_req = time_rem;
-    } while (result == -1 && errno == EINTR);
+    } while (result == -1 && 
+             errno == EINTR && 
+             (long)time_req.tv_sec >= 0 && 
+             (long)time_req.tv_nsec >= 0);
 
     return NPT_SUCCESS;
 }

@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -117,7 +118,7 @@ protected:
                           NPT_Int32                index, 
                           NPT_Int32                count,
                           bool                     browse_metadata = false,
-                          const char*              filter = "dc:date,upnp:genre,res,res@duration,res@size,upnp:albumArtURI,upnp:album,upnp:artist,upnp:author", // explicitely specify res otherwise WMP won't return a URL!
+                          const char*              filter = "dc:date,upnp:genre,res,res@duration,res@size,upnp:albumArtURI,upnp:album,upnp:artist,upnp:author,searchable,childCount", // explicitely specify res otherwise WMP won't return a URL!
                           const char*              sort = "");
 private:
     NPT_Result Find(const char* ip, PLT_DeviceDataReference& device);

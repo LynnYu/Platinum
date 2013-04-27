@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -37,6 +38,7 @@
 #include "PltHttp.h"
 #include "PltDatagramStream.h"
 #include "PltVersion.h"
+#include "PltUtilities.h"
 
 NPT_SET_LOCAL_LOGGER("platinum.core.http")
 
@@ -247,25 +249,7 @@ PLT_HttpHelper::ParseBody(const NPT_HttpMessage& message,
     NPT_String body;
     NPT_CHECK_WARNING(GetBody(message, body));
 
-	//PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_INFO, (NPT_HttpResponse*)&message);
-	NPT_LOG_INFO_1("GetBody:%s", body);
-
-    // parse body
-    NPT_XmlParser parser;
-    NPT_XmlNode*  node;
-    NPT_Result result = parser.Parse(body, node);
-    if (NPT_FAILED(result)) {
-        NPT_LOG_FINEST_1("Failed to parse %s", body.IsEmpty()?"(empty string)":body.GetChars());
-        NPT_CHECK_WARNING(result);
-    }
-    
-    tree = node->AsElementNode();
-    if (!tree) {
-        delete node;
-        return NPT_FAILURE;
-    }
-
-    return NPT_SUCCESS;
+    return PLT_XmlHelper::Parse(body, tree);
 }
 
 /*----------------------------------------------------------------------
@@ -278,15 +262,12 @@ PLT_HttpHelper::IsConnectionKeepAlive(NPT_HttpMessage& message)
         message.GetHeaders().GetHeaderValue(NPT_HTTP_HEADER_CONNECTION);
 
     // the DLNA says that all HTTP 1.0 requests should be closed immediately by the server
-    // all HTTP 1.1 requests without a Connection header or with a Connection header 
-    // NOT saying "Close" should be kept alive
     NPT_String protocol = message.GetProtocol();
-    if (!protocol.Compare(NPT_HTTP_PROTOCOL_1_1, true) && 
-        (!connection || connection->Compare("close", true))) {
-        return true; 
-    }
-
-    return false;
+    if (protocol.Compare(NPT_HTTP_PROTOCOL_1_0, true) == 0) return false;
+    
+    // all HTTP 1.1 requests without a Connection header 
+    // or with a keep-alive Connection header should be kept alive if possible 
+    return (!connection || connection->Compare("keep-alive", true) == 0);
 }
 
 /*----------------------------------------------------------------------
@@ -340,62 +321,12 @@ PLT_HttpHelper::SetHost(NPT_HttpRequest& request, const char* host)
 }
 
 /*----------------------------------------------------------------------
-|   PLT_HttpHelper::GetRange
-+---------------------------------------------------------------------*/
-NPT_Result
-PLT_HttpHelper::GetRange(const NPT_HttpRequest& request, 
-                         NPT_Position&          start, 
-                         NPT_Position&          end)
-{
-    start = (NPT_Position)-1;
-    end = (NPT_Position)-1;    
-    
-    const NPT_String* range = 
-        request.GetHeaders().GetHeaderValue(NPT_HTTP_HEADER_RANGE);
-    NPT_CHECK_POINTER(range);
-
-    char s[32], e[32];
-    s[0] = '\0';
-    e[0] = '\0';
-    int ret = sscanf(*range, "bytes=%31[^-]-%31s", s, e);
-    if (ret < 1) {
-        return NPT_FAILURE;
-    }
-    if (s[0] != '\0') {
-        NPT_ParseInteger64(s, start);
-    }
-    if (e[0] != '\0') {
-        NPT_ParseInteger64(e, end);
-    }
-
-    return NPT_SUCCESS;
-}
-
-/*----------------------------------------------------------------------
-|   PLT_HttpHelper::SetRange
-+---------------------------------------------------------------------*/
-void
-PLT_HttpHelper::SetRange(NPT_HttpRequest& request, 
-                         NPT_Position     start, 
-                         NPT_Position     end)
-{
-    NPT_String range = "bytes=";
-    if (start != (NPT_Position)-1) {
-        range += NPT_String::FromIntegerU(start);
-    }
-    range += '-';
-    if (end != (NPT_Position)-1) {
-        range += NPT_String::FromIntegerU(end);
-    }
-    request.GetHeaders().SetHeader(NPT_HTTP_HEADER_RANGE, range);
-}
-
-/*----------------------------------------------------------------------
 |   PLT_HttpHelper::ToLog
 +---------------------------------------------------------------------*/
 NPT_Result
 PLT_HttpHelper::ToLog(NPT_LoggerReference logger, 
-                      int                 level, 
+                      int                 level,
+                      const char*          prefix,
                       NPT_HttpRequest*    request)
 {
     if (!request) {
@@ -403,7 +334,7 @@ PLT_HttpHelper::ToLog(NPT_LoggerReference logger,
         return NPT_FAILURE;
     }
 
-    return ToLog(logger, level, *request);
+    return ToLog(logger, level, prefix, *request);
 }
 
 /*----------------------------------------------------------------------
@@ -411,7 +342,8 @@ PLT_HttpHelper::ToLog(NPT_LoggerReference logger,
 +---------------------------------------------------------------------*/
 NPT_Result
 PLT_HttpHelper::ToLog(NPT_LoggerReference    logger, 
-                      int                    level, 
+                      int                    level,
+                      const char*            prefix, 
                       const NPT_HttpRequest& request)
 {
     NPT_COMPILER_UNUSED(logger);
@@ -421,71 +353,12 @@ PLT_HttpHelper::ToLog(NPT_LoggerReference    logger,
     NPT_OutputStreamReference output = stream;
     request.GetHeaders().GetHeaders().Apply(NPT_HttpHeaderPrinter(output));
 
-    NPT_LOG_L4(logger, level, "\n%s %s %s\n%s", 
+    NPT_LOG_L5(logger, level, "%s\n%s %s %s\n%s", 
+        prefix,
         (const char*)request.GetMethod(), 
         (const char*)request.GetUrl().ToRequestString(true), 
         (const char*)request.GetProtocol(),
         (const char*)stream->GetString());
-    return NPT_SUCCESS;
-}
-
-/*----------------------------------------------------------------------
-|   PLT_HttpHelper::GetContentRange
-+---------------------------------------------------------------------*/
-NPT_Result
-PLT_HttpHelper::GetContentRange(const NPT_HttpResponse& response, 
-                                NPT_Position&           start, 
-                                NPT_Position&           end, 
-                                NPT_LargeSize&          length)
-{
-    const NPT_String* range = 
-        response.GetHeaders().GetHeaderValue(NPT_HTTP_HEADER_CONTENT_RANGE);
-    NPT_CHECK_POINTER(range);
-
-    start  = (NPT_Position)-1;
-    end    = (NPT_Position)-1;
-    length = (NPT_LargeSize)-1;
-
-    char s[32], e[32], l[32];
-    s[0] = '\0';
-    e[0] = '\0';
-    l[0] = '\0';
-    int ret = sscanf(*range, "bytes %31[^-]-%31s[^/]/%31s", s, e, l);
-    if (ret < 3) {
-        return NPT_FAILURE;
-    }
-    if (s[0] != '\0') {
-        NPT_ParseInteger64(s, start);
-    }
-    if (e[0] != '\0') {
-        NPT_ParseInteger64(e, end);
-    }
-    if (l[0] != '\0') {
-        NPT_ParseInteger64(l, length);
-    }
-    return NPT_SUCCESS;
-}
-
-/*----------------------------------------------------------------------
-|   PLT_HttpHelper::SetContentRange
-+---------------------------------------------------------------------*/
-NPT_Result
-PLT_HttpHelper::SetContentRange(NPT_HttpResponse& response, 
-                                NPT_Position      start, 
-                                NPT_Position      end, 
-                                NPT_LargeSize     length)
-{
-    if (start == (NPT_Position)-1 || end == (NPT_Position)-1 || length == (NPT_Size)-1) {
-        NPT_LOG_WARNING_3("Content Range is exactly -1? (start=%d, end=%d, length=%d)", start, end, length);
-    }
-
-    NPT_String range = "bytes ";
-    range += NPT_String::FromIntegerU(start);
-    range += '-';
-    range += NPT_String::FromIntegerU(end);
-    range += '/';
-    range += NPT_String::FromIntegerU(length);
-    response.GetHeaders().SetHeader(NPT_HTTP_HEADER_CONTENT_RANGE, range);
     return NPT_SUCCESS;
 }
 
@@ -495,18 +368,31 @@ PLT_HttpHelper::SetContentRange(NPT_HttpResponse& response,
 PLT_DeviceSignature
 PLT_HttpHelper::GetDeviceSignature(const NPT_HttpRequest& request)
 {
-	const NPT_String* agent = request.GetHeaders().GetHeaderValue(NPT_HTTP_HEADER_USER_AGENT);
-	const NPT_String* hdr   = request.GetHeaders().GetHeaderValue("X-AV-Client-Info");
+	const NPT_String* agent  = request.GetHeaders().GetHeaderValue(NPT_HTTP_HEADER_USER_AGENT);
+	const NPT_String* hdr    = request.GetHeaders().GetHeaderValue("X-AV-Client-Info");
+    const NPT_String* server = request.GetHeaders().GetHeaderValue(NPT_HTTP_HEADER_SERVER);
 
-	if (agent && (agent->Find("XBox", 0, true) >= 0 || agent->Find("Xenon", 0, true) >= 0)) {
-		return PLT_XBOX;
-	} else if (hdr && hdr->Find("PLAYSTATION 3", 0, true) >= 0) {
-		return PLT_PS3;
-	} else if (agent && agent->Find("Windows-Media-Player", 0, true) >= 0) {
-		return PLT_WMP;
-	}
+	if ((agent && (agent->Find("XBox", 0, true) >= 0 || agent->Find("Xenon", 0, true) >= 0)) ||
+        (server && server->Find("Xbox", 0, true) >= 0)) {
+		return PLT_DEVICE_XBOX;
+	} else if (agent && (agent->Find("Windows Media Player", 0, true) >= 0 || agent->Find("Windows-Media-Player", 0, true) >= 0 || agent->Find("Mozilla/4.0", 0, true) >= 0 || agent->Find("WMFSDK", 0, true) >= 0)) {
+		return PLT_DEVICE_WMP;
+	} else if (agent && (agent->Find("Sonos", 0, true) >= 0)) {
+		return PLT_DEVICE_SONOS;
+	} else if ((agent && agent->Find("PLAYSTATION 3", 0, true) >= 0) || 
+               (hdr && hdr->Find("PLAYSTATION 3", 0, true) >= 0)) {
+		return PLT_DEVICE_PS3;
+	} else if (agent && agent->Find("Windows", 0, true) >= 0) {
+        return PLT_DEVICE_WINDOWS;
+    } else if (agent && (agent->Find("Mac", 0, true) >= 0 || agent->Find("OS X", 0, true) >= 0 || agent->Find("OSX", 0, true) >= 0)) {
+        return PLT_DEVICE_MAC;
+    } else if (agent && (agent->Find("VLC", 0, true) >= 0 || agent->Find("VideoLan", 0, true) >= 0)) {
+        return PLT_DEVICE_VLC;
+    } else {
+        NPT_LOG_FINE_1("Unknown device signature (ua=%s)", agent?agent->GetChars():"none");
+    }
 
-	return PLT_UNKNOWN_DEVICE;
+	return PLT_DEVICE_UNKNOWN;
 }
 
 /*----------------------------------------------------------------------
@@ -514,7 +400,8 @@ PLT_HttpHelper::GetDeviceSignature(const NPT_HttpRequest& request)
 +---------------------------------------------------------------------*/
 NPT_Result
 PLT_HttpHelper::ToLog(NPT_LoggerReference logger,
-                      int                 level, 
+                      int                 level,
+                      const char*         prefix, 
                       NPT_HttpResponse*   response)
 {
     if (!response) {
@@ -522,7 +409,7 @@ PLT_HttpHelper::ToLog(NPT_LoggerReference logger,
         return NPT_FAILURE;
     }
 
-    return ToLog(logger, level, *response);
+    return ToLog(logger, level, prefix, *response);
 }
 
 /*----------------------------------------------------------------------
@@ -530,7 +417,8 @@ PLT_HttpHelper::ToLog(NPT_LoggerReference logger,
 +---------------------------------------------------------------------*/
 NPT_Result
 PLT_HttpHelper::ToLog(NPT_LoggerReference     logger, 
-                      int                     level, 
+                      int                     level,
+                      const char*             prefix, 
                       const NPT_HttpResponse& response)
 {
     NPT_COMPILER_UNUSED(logger);
@@ -540,31 +428,12 @@ PLT_HttpHelper::ToLog(NPT_LoggerReference     logger,
     NPT_OutputStreamReference output = stream;
     response.GetHeaders().GetHeaders().Apply(NPT_HttpHeaderPrinter(output));
 
-    NPT_LOG_L4(logger, level, "\n%s %d %s\n%s", 
+    NPT_LOG_L5(logger, level, "%s\n%s %d %s\n%s", 
+        prefix,
         (const char*)response.GetProtocol(), 
         response.GetStatusCode(), 
         (const char*)response.GetReasonPhrase(),
         (const char*)stream->GetString());
-    return NPT_SUCCESS;
-}
-
-/*----------------------------------------------------------------------
-|   PLT_HttpHelper::Connect
-+---------------------------------------------------------------------*/
-NPT_Result
-PLT_HttpHelper::Connect(NPT_Socket&      connection, 
-                        NPT_HttpRequest& request, 
-                        NPT_Timeout      timeout)
-{
-    // get the address of the server
-    NPT_IpAddress server_address;
-    NPT_CHECK_SEVERE(server_address.ResolveName(request.GetUrl().GetHost(), timeout));
-    NPT_SocketAddress address(server_address, request.GetUrl().GetPort());
-
-    // connect to the server
-    NPT_LOG_FINER_2("Connecting to %s:%d\n", (const char*)request.GetUrl().GetHost(), request.GetUrl().GetPort());
-    NPT_CHECK_SEVERE(connection.Connect(address, timeout));
-
     return NPT_SUCCESS;
 }
 

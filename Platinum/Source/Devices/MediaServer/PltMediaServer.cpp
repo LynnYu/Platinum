@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -74,7 +75,6 @@ PLT_MediaServer::PLT_MediaServer(const char*  friendly_name,
 {
     m_ModelDescription = "Plutinosoft AV Media Server Device";
     m_ModelName        = "AV Media Server Device";
-    m_ModelNumber      = "1.0";
     m_ModelURL         = "http://www.plutinosoft.com/platinum";
     m_DlnaDoc          = "DMS-1.50";
 }
@@ -107,8 +107,8 @@ PLT_MediaServer::SetupServices()
         service->SetStateVariableRate("ContainerUpdateIDs", NPT_TimeInterval(2.));
         service->SetStateVariable("SystemUpdateID", "0");
         service->SetStateVariableRate("SystemUpdateID", NPT_TimeInterval(2.));
-        service->SetStateVariable("SearchCapability", "upnp:class");
-        service->SetStateVariable("SortCapability", "");
+        service->SetStateVariable("SearchCapability", "@id,@refID,dc:title,upnp:class,upnp:genre,upnp:artist,upnp:author,upnp:author@role,upnp:album,dc:creator,res@size,res@duration,res@protocolInfo,res@protection,dc:publisher,dc:language,upnp:originalTrackNumber,dc:date,upnp:producer,upnp:rating,upnp:actor,upnp:director,upnp:toc,dc:description,microsoft:userRatingInStars,microsoft:userEffectiveRatingInStars,microsoft:userRating,microsoft:userEffectiveRating,microsoft:serviceProvider,microsoft:artistAlbumArtist,microsoft:artistPerformer,microsoft:artistConductor,microsoft:authorComposer,microsoft:authorOriginalLyricist,microsoft:authorWriter,upnp:userAnnotation,upnp:channelName,upnp:longDescription,upnp:programTitle");
+        service->SetStateVariable("SortCapability", "dc:title,upnp:genre,upnp:album,dc:creator,res@size,res@duration,res@bitrate,dc:publisher,dc:language,upnp:originalTrackNumber,dc:date,upnp:producer,upnp:rating,upnp:actor,upnp:director,upnp:toc,dc:description,microsoft:year,microsoft:userRatingInStars,microsoft:userEffectiveRatingInStars,microsoft:userRating,microsoft:userEffectiveRating,microsoft:serviceProvider,microsoft:artistAlbumArtist,microsoft:artistPerformer,microsoft:artistConductor,microsoft:authorComposer,microsoft:authorOriginalLyricist,microsoft:authorWriter,microsoft:sourceUrl,upnp:userAnnotation,upnp:channelName,upnp:longDescription,upnp:programTitle");
     }
 
     {
@@ -189,34 +189,6 @@ PLT_MediaServer::OnAction(PLT_ActionReference&          action,
 }
 
 /*----------------------------------------------------------------------
- |   PLT_MediaServer::ProcessGetDescription
- +---------------------------------------------------------------------*/
-NPT_Result 
-PLT_MediaServer::ProcessGetDescription(NPT_HttpRequest&              request,
-                                       const NPT_HttpRequestContext& context,
-                                       NPT_HttpResponse&             response)
-{
-    NPT_String m_OldModelName   = m_ModelName;
-    NPT_String m_OldModelNumber = m_ModelNumber;
-    
-    /* change some things based on User-Agent header */
-    NPT_HttpHeader* user_agent = request.GetHeaders().GetHeader(NPT_HTTP_HEADER_USER_AGENT);
-    if (user_agent && user_agent->GetValue().Find("Sonos", 0, true)>=0) {
-        /* Force "Rhapsody" so that Sonos doesn't reject us */
-        m_ModelName   = "Rhapsody";
-        m_ModelNumber = "3.0";
-    }
-    
-    NPT_Result res = PLT_DeviceHost::ProcessGetDescription(request, context, response);
-    
-    /* reset back to old values now */
-    m_ModelName   = m_OldModelName;
-    m_ModelNumber = m_OldModelNumber;
-    
-    return res;
-}
-
-/*----------------------------------------------------------------------
 |   PLT_FileMediaServer::ProcessHttpGetRequest
 +---------------------------------------------------------------------*/
 NPT_Result 
@@ -227,7 +199,7 @@ PLT_MediaServer::ProcessHttpGetRequest(NPT_HttpRequest&              request,
     /* Try to handle file request */
     if (m_Delegate) return m_Delegate->ProcessFileRequest(request, context, response);
     
-    return NPT_ERROR_NO_SUCH_FILE;
+    return NPT_ERROR_NO_SUCH_ITEM;
 }
 
 /*----------------------------------------------------------------------
@@ -430,7 +402,7 @@ PLT_MediaServer::OnBrowse(PLT_ActionReference&          action,
         return NPT_FAILURE;
     }
     
-    NPT_LOG_INFO_6("Processing %s from %s with id=\"%s\", filter=\"%s\", start=%d, count=%d", 
+    NPT_LOG_FINE_6("Processing %s from %s with id=\"%s\", filter=\"%s\", start=%d, count=%d", 
                    (const char*)browse_flag_val, 
                    (const char*)context.GetRemoteAddress().GetIpAddress().ToString(),
                    (const char*)object_id,

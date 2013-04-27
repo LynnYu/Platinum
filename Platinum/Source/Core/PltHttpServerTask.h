@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -89,7 +90,12 @@ private:
     virtual NPT_Result RespondToClient(NPT_HttpRequest&              request, 
                                        const NPT_HttpRequestContext& context,
                                        NPT_HttpResponse*&            response);
-    
+    virtual NPT_Result SendResponseHeaders(NPT_HttpResponse* response,
+                                           NPT_OutputStream& output_stream,
+                                           bool&             keep_alive);
+    virtual NPT_Result SendResponseBody(NPT_HttpResponse* response,
+                                        NPT_OutputStream& output_stream);
+
 protected:
     NPT_Socket*         m_Socket;
     bool                m_StayAliveForever;

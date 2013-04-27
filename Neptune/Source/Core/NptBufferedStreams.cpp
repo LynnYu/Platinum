@@ -38,13 +38,15 @@
 #include "NptBufferedStreams.h"
 #include "NptUtils.h"
 
-#define NPT_CHECK_NOLOGTIMEOUT(_x)     \
-do {                                \
+#define NPT_CHECK_NOLOGTIMEOUT(_x)   \
+do {                                 \
     NPT_Result __result = (_x);      \
     if (__result != NPT_SUCCESS) {   \
-        if (__result != NPT_ERROR_TIMEOUT) NPT_CHECK(__result); \
+        if (__result != NPT_ERROR_TIMEOUT && __result != NPT_ERROR_EOS) { \
+            NPT_CHECK(__result);     \
+        }                            \
         return __result;             \
-    }                               \
+    }                                \
 } while(0)
 
 /*----------------------------------------------------------------------
@@ -236,9 +238,6 @@ done:
             return NPT_SUCCESS;
         }
     }
-    if (result == NPT_ERROR_CANCELLED) {
-        return result;
-    }
     return result;
 }
 
@@ -302,9 +301,7 @@ NPT_BufferedInputStream::Read(void*     buffer,
             NPT_CopyMemory(buffer, 
                            m_Buffer.data + m_Buffer.offset,
                            buffered);
-            buffer = (void*)((NPT_Byte*)buffer+buffered);
             m_Buffer.offset += buffered;
-            bytes_to_read -= buffered;
             total_read += buffered;
             goto done;
         }
@@ -369,7 +366,7 @@ NPT_BufferedInputStream::Peek(void*     buffer,
     buffered = m_Buffer.valid-m_Buffer.offset;
     if (bytes_to_read > buffered && buffered < new_size && !m_Eos) {
         // we need more data than what we have          
-        // switch to unbuffer mode and resize to force relocation
+        // switch to unbuffered mode and resize to force relocation
         // of data to the beginning of the buffer
         SetBufferSize(new_size, true);
         // fill up the end of the buffer
@@ -394,7 +391,6 @@ NPT_BufferedInputStream::Peek(void*     buffer,
             // some chars, so do not return EOS now
             return NPT_SUCCESS;
         }
-    
     }
     return result;    
 }
@@ -403,8 +399,11 @@ NPT_BufferedInputStream::Peek(void*     buffer,
 |   NPT_BufferedInputStream::Seek
 +---------------------------------------------------------------------*/
 NPT_Result 
-NPT_BufferedInputStream::Seek(NPT_Position /*offset*/)
+NPT_BufferedInputStream::Seek(NPT_Position offset)
 {
+	if (!m_Source.IsNull())
+		return m_Source->Seek(offset);
+
     // not implemented yet
     return NPT_ERROR_NOT_IMPLEMENTED;
 }

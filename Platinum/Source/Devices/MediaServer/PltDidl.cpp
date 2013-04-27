@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -35,7 +36,7 @@
 |   includes
 +---------------------------------------------------------------------*/
 #include "PltDidl.h"
-#include "PltXmlHelper.h"
+#include "PltUtilities.h"
 #include "PltService.h"
 
 NPT_SET_LOCAL_LOGGER("platinum.media.server.didl")
@@ -56,7 +57,7 @@ const char* didl_namespace_dlna = "urn:schemas-dlna-org:metadata-1-0/";
 |   PLT_Didl::ConvertFilterToMask
 +---------------------------------------------------------------------*/
 NPT_UInt32 
-PLT_Didl::ConvertFilterToMask(NPT_String filter)
+PLT_Didl::ConvertFilterToMask(const NPT_String& filter)
 {
     // easy out
     if (filter.GetLength() == 0) return PLT_FILTER_MASK_ALL;
@@ -71,7 +72,7 @@ PLT_Didl::ConvertFilterToMask(NPT_String filter)
 
     while (s[i] != '\0') {
         int next_comma = filter.Find(',', i);
-        int len = ((next_comma < 0)?filter.GetLength():next_comma)-i;
+        int len = ((next_comma < 0)?(int)filter.GetLength():next_comma)-i;
 
         if (NPT_String::CompareN(s+i, "*", 1) == 0) {
             // return now, there's no point in parsing the rest
@@ -81,62 +82,65 @@ PLT_Didl::ConvertFilterToMask(NPT_String filter)
         // title is required, so we return a non empty mask
         mask |= PLT_FILTER_MASK_TITLE;
 
-        if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_TITLE, len) == 0) {
+        if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_TITLE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_TITLE;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_CREATOR, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_REFID, len, true) == 0) {
+            mask |= PLT_FILTER_MASK_REFID;
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_CREATOR, len, true) == 0) {
             mask |= PLT_FILTER_MASK_CREATOR;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ARTIST, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ARTIST, len, true) == 0) {
             mask |= PLT_FILTER_MASK_ARTIST;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ACTOR, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ACTOR, len, true) == 0) {
             mask |= PLT_FILTER_MASK_ACTOR;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_AUTHOR, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_AUTHOR, len, true) == 0) {
             mask |= PLT_FILTER_MASK_AUTHOR;       
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_DATE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_DATE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_DATE;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ALBUM, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ALBUM, len, true) == 0) {
             mask |= PLT_FILTER_MASK_ALBUM;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_GENRE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_GENRE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_GENRE;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ALBUMARTURI, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ALBUMARTURI, len, true) == 0 ||
+                   NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ALBUMARTURI_DLNAPROFILEID, len, true) == 0) {
             mask |= PLT_FILTER_MASK_ALBUMARTURI;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_DESCRIPTION, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_DESCRIPTION, len, true) == 0) {
             mask |= PLT_FILTER_MASK_DESCRIPTION;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ORIGINALTRACK, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_ORIGINALTRACK, len, true) == 0) {
             mask |= PLT_FILTER_MASK_ORIGINALTRACK;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_SEARCHABLE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_SEARCHABLE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_SEARCHABLE;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_SEARCHCLASS, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_SEARCHCLASS, len, true) == 0) {
             mask |= PLT_FILTER_MASK_SEARCHCLASS;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_CONTAINER_SEARCHABLE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_CONTAINER_SEARCHABLE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_SEARCHABLE;       
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_CHILDCOUNT, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_CHILDCOUNT, len, true) == 0) {
             mask |= PLT_FILTER_MASK_CHILDCOUNT;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_CONTAINER_CHILDCOUNT, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_CONTAINER_CHILDCOUNT, len, true) == 0) {
             mask |= PLT_FILTER_MASK_CHILDCOUNT;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_PROGRAMTITLE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_PROGRAMTITLE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_PROGRAMTITLE;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_SERIESTITLE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_SERIESTITLE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_SERIESTITLE;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_EPISODE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_EPISODE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_EPISODE;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES, len, true) == 0) {
             mask |= PLT_FILTER_MASK_RES;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_DURATION, len) == 0 ||
-				   NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_DURATION_SHORT, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_DURATION, len, true) == 0 ||
+				   NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_DURATION_SHORT, len, true) == 0) {
             mask |= PLT_FILTER_MASK_RES | PLT_FILTER_MASK_RES_DURATION;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_SIZE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_SIZE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_RES | PLT_FILTER_MASK_RES_SIZE;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_PROTECTION, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_PROTECTION, len, true) == 0) {
             mask |= PLT_FILTER_MASK_RES | PLT_FILTER_MASK_RES_PROTECTION;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_RESOLUTION, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_RESOLUTION, len, true) == 0) {
             mask |= PLT_FILTER_MASK_RES | PLT_FILTER_MASK_RES_RESOLUTION;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_BITRATE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_BITRATE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_RES | PLT_FILTER_MASK_RES_BITRATE;
-        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_BITSPERSAMPLE, len) == 0) {
+        } else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_BITSPERSAMPLE, len, true) == 0) {
             mask |= PLT_FILTER_MASK_RES | PLT_FILTER_MASK_RES_BITSPERSAMPLE;
-		} else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_NRAUDIOCHANNELS, len) == 0) {
+		} else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_NRAUDIOCHANNELS, len, true) == 0) {
             mask |= PLT_FILTER_MASK_RES | PLT_FILTER_MASK_RES_NRAUDIOCHANNELS;
-		} else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_SAMPLEFREQUENCY, len) == 0) {
+		} else if (NPT_String::CompareN(s+i, PLT_FILTER_FIELD_RES_SAMPLEFREQUENCY, len, true) == 0) {
             mask |= PLT_FILTER_MASK_RES | PLT_FILTER_MASK_RES_SAMPLEFREQUENCY;
 		}
 
@@ -289,7 +293,7 @@ PLT_Didl::ParseTimeStamp(const NPT_String& timestamp, NPT_UInt32& seconds)
 |   PLT_Didl::ToDidl
 +---------------------------------------------------------------------*/
 NPT_Result
-PLT_Didl::ToDidl(PLT_MediaObject& object, NPT_String filter, NPT_String& didl)
+PLT_Didl::ToDidl(PLT_MediaObject& object, const NPT_String& filter, NPT_String& didl)
 {
     NPT_UInt32 mask = ConvertFilterToMask(filter);
 

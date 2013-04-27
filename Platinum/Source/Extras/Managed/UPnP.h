@@ -103,22 +103,7 @@ public:
 
 	UPnP()
 	{
-		m_pHandle = new PLT_UPnP(DefaultPort, true);
-	}
-
-	UPnP(unsigned short port)
-	{
-		m_pHandle = new PLT_UPnP(port, true);
-	}
-
-	UPnP(bool multicast)
-	{
-		m_pHandle = new PLT_UPnP(DefaultPort, multicast);
-	}
-
-	UPnP(unsigned short port, bool multicast)
-	{
-		m_pHandle = new PLT_UPnP(port, multicast);
+		m_pHandle = new PLT_UPnP();
 	}
 
 	~UPnP()

@@ -282,6 +282,45 @@ namespace Platinum
 {
 
 /*----------------------------------------------------------------------
+|   AlbumArtInfo
++---------------------------------------------------------------------*/
+public ref class AlbumArtInfo : public ManagedWrapper<PLT_AlbumArtInfo>
+{
+public:
+
+    // properties
+
+    PLATINUM_MANAGED_IMPLEMENT_STRING_PROPERTY(String^, Uri, uri, m_pHandle);
+    PLATINUM_MANAGED_IMPLEMENT_STRING_PROPERTY(String^, DlnaProfile, dlna_profile, m_pHandle);
+
+internal:
+
+    AlbumArtInfo(PLT_AlbumArtInfo& native) :
+        ManagedWrapper<PLT_AlbumArtInfo>(native)
+    {}
+        
+public:
+    AlbumArtInfo(String^ uri)
+    {
+        Uri = uri;
+	}
+
+    AlbumArtInfo(String^ uri, String^ dlna_profile)
+    {
+        Uri = uri;
+        DlnaProfile = dlna_profile;
+    }
+};
+
+}
+
+// marshal wrapper
+PLATINUM_MANAGED_MARSHAL_AS(Platinum::AlbumArtInfo, PLT_AlbumArtInfo);
+
+namespace Platinum
+{
+
+/*----------------------------------------------------------------------
 |   ExtraInfo
 +---------------------------------------------------------------------*/
 public ref class ExtraInfo : public ManagedWrapper<PLT_ExtraInfo>
@@ -290,8 +329,6 @@ public:
 
     // properties
 
-    PLATINUM_MANAGED_IMPLEMENT_STRING_PROPERTY(String^, AlbumArtUri, album_art_uri, m_pHandle);
-    PLATINUM_MANAGED_IMPLEMENT_STRING_PROPERTY(String^, AlbumArtUriDlnaProfile, album_art_uri_dlna_profile, m_pHandle);
     PLATINUM_MANAGED_IMPLEMENT_STRING_PROPERTY(String^, ArtistDiscographyUri, artist_discography_uri, m_pHandle);
     PLATINUM_MANAGED_IMPLEMENT_STRING_PROPERTY(String^, LyricsUri, lyrics_uri, m_pHandle);
 
@@ -300,12 +337,23 @@ public:
         IEnumerable<String^>^ get();
     }
 
+    property IEnumerable<AlbumArtInfo^>^ AlbumArts
+    {
+        IEnumerable<AlbumArtInfo^>^ get();
+    }
+
 public:
 
     void AddGenre(String^ relation)
     {
         m_pHandle->relations.Add(NPT_String(StringConv(relation)));
     }
+
+    void AddAlbumArtInfo(AlbumArtInfo^ info)
+    {
+        m_pHandle->album_arts.Add(info->Handle);
+    }
+
 
 internal:
 
@@ -347,6 +395,7 @@ internal:
 
 // marshal wrapper
 PLATINUM_MANAGED_MARSHAL_AS(Platinum::MiscInfo, PLT_MiscInfo);
+
 namespace Platinum
 {
 
@@ -500,9 +549,9 @@ public:
 
 public:
 
-    void AddResource(MediaResource^ resourse)
+    void AddResource(MediaResource^ resource)
     {
-        (*m_pHandle)->m_Resources.Add(resourse->Handle);
+        (*m_pHandle)->m_Resources.Add(resource->Handle);
     }
 
 internal:

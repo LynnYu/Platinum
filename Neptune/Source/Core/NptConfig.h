@@ -58,6 +58,8 @@
 #define NPT_CONFIG_HAVE_MEMSET
 #define NPT_CONFIG_HAVE_MEMCMP
 #define NPT_CONFIG_HAVE_GETENV
+#define NPT_CONFIG_HAVE_SETENV
+#define NPT_CONFIG_HAVE_UNSETENV
 #define NPT_CONFIG_HAVE_READDIR_R
 #endif /* NPT_CONFIG_HAS_STD_C */
 
@@ -129,6 +131,7 @@
 
 /* linux */
 #if defined(__linux__)
+#define NPT_CONFIG_HAVE_GETADDRINFO
 #undef NPT_CONFIG_HAVE_SOCKADDR_SA_LEN
 #endif
 
@@ -140,7 +143,15 @@
 
 /* android */
 #if defined(ANDROID)
+#define NPT_CONFIG_HAVE_GETADDRINFO
 #undef NPT_CONFIG_HAVE_SOCKADDR_SA_LEN
+#endif
+
+/* OSX and iOS */
+#if defined(__APPLE__)
+#define NPT_CONFIG_HAVE_GETADDRINFO
+#define NPT_CONFIG_HAVE_AUTORELEASE_POOL
+#define NPT_CONFIG_HAVE_SYSTEM_LOG_CONFIG
 #endif
 
 /*----------------------------------------------------------------------
@@ -173,6 +184,7 @@
 /* Microsoft C/C++ Compiler */
 #if defined(_MSC_VER)
 #undef NPT_CONFIG_HAVE_STDINT_H
+#define NPT_CONFIG_HAVE_GETADDRINFO
 #define NPT_CONFIG_STAT_ST_CTIME_IS_ST_BIRTHTIME
 #define NPT_FORMAT_64 "I64"
 #define NPT_CONFIG_INT64_TYPE __int64
@@ -214,6 +226,10 @@ typedef long NPT_PointerLong;
 #undef NPT_CONFIG_HAVE_GETENV
 #define NPT_CONFIG_HAVE_DUPENV_S
 #define dupenv_s _dupenv_s
+#undef NPT_CONFIG_HAVE_SETENV
+#undef NPT_CONFIG_HAVE_UNSETENV
+#define NPT_CONFIG_HAVE_PUTENV_S
+#define putenv_s _putenv_s
 #else
 #undef NPT_CONFIG_HAVE_GMTIME_R
 #undef NPT_CONFIG_HAVE_LOCALTIME_R
@@ -243,10 +259,12 @@ typedef long NPT_PointerLong;
 
 /* Android */
 #if defined(ANDROID)
+#if !defined(NPT_CONFIG_NO_RTTI)
 #define NPT_CONFIG_NO_RTTI
 #endif
+#endif
 
-/* OSX */
+/* OSX and iOS */
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #include <AvailabilityMacros.h>

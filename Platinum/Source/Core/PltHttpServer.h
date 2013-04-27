@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -49,34 +50,31 @@
 +---------------------------------------------------------------------*/
 /**
  The PLT_HttpServer class provides an asynchronous way to handle multiple HTTP requests
- concurrently.
+ concurrently. Pipelining requests and keep-alive connections are supported.
  */
 class PLT_HttpServer : public NPT_HttpRequestHandler,
                        public NPT_HttpServer
 {
 public:
     PLT_HttpServer(NPT_IpAddress address = NPT_IpAddress::Any,
-                   unsigned int  port = 0,
+                   NPT_IpPort    port = 0,
                    bool          allow_random_port_on_bind_failure = false,
-                   NPT_Cardinal  max_clients = 0,
+                   NPT_Cardinal  max_clients = 50,
                    bool          reuse_address = false);
     virtual ~PLT_HttpServer();
     
     // class methods
-    static NPT_Result ServeFile(const NPT_HttpRequest& request,
-                                NPT_HttpResponse&      response, 
-                                NPT_String             file_path);
-    static const char* GetMimeType(const NPT_String& filename);
-    
+    static NPT_Result ServeFile(const NPT_HttpRequest&        request, 
+                                const NPT_HttpRequestContext& context,
+                                NPT_HttpResponse&             response, 
+                                NPT_String                    file_path);
+    static NPT_Result ServeStream(const NPT_HttpRequest&        request, 
+                                  const NPT_HttpRequestContext& context,
+                                  NPT_HttpResponse&             response,
+                                  NPT_InputStreamReference&     stream, 
+                                  const char*                   content_type);
+
     // NPT_HttpRequestHandler methods
-    /**
-     * Add a request handler. As opposed to the base class NPT_HttpServer, the ownership 
-     * of the handler is transfered to this object, so the caller is NOT responsible for 
-     * the lifetime management of the handler object.
-     */
-    virtual NPT_Result AddRequestHandler(NPT_HttpRequestHandler* handler, 
-                                         const char*             path, 
-                                         bool                    include_children = false);
     virtual NPT_Result SetupResponse(NPT_HttpRequest&              request,
                                      const NPT_HttpRequestContext& context,
                                      NPT_HttpResponse&             response);
@@ -87,13 +85,13 @@ public:
     virtual unsigned int GetPort() { return m_Port; }
 
 private:
-    PLT_TaskManager*                  m_TaskManager;
-    NPT_IpAddress                     m_Address;
-    unsigned int                      m_Port;
-    bool                              m_AllowRandomPortOnBindFailure;
-    bool                              m_ReuseAddress;
-    PLT_HttpListenTask*               m_HttpListenTask;
-    NPT_List<NPT_HttpRequestHandler*> m_RequestHandlers;
+    PLT_TaskManager*    m_TaskManager;
+    NPT_IpAddress       m_Address;
+    NPT_IpPort          m_Port;
+    bool                m_AllowRandomPortOnBindFailure;
+    bool                m_ReuseAddress;
+    PLT_HttpListenTask* m_HttpListenTask;
+    bool                m_Aborted;
 };
 
 #endif /* _PLT_HTTP_SERVER_H_ */

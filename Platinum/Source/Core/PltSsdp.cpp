@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -63,23 +64,24 @@ PLT_SsdpSender::SendSsdp(NPT_HttpRequest&   request,
     NPT_CHECK_SEVERE(FormatPacket(request, usn, target, socket, notify));
 
     // logging
-    NPT_LOG_FINER_2("Sending SSDP %s for %s",
+    NPT_String prefix = NPT_String::Format("Sending SSDP %s packet for %s",
         (const char*)request.GetMethod(), 
         usn);
-    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINER, &request);
+    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINER, prefix, &request);
 
     // use a memory stream to write all the data
     NPT_MemoryStream stream;
     NPT_Result res = request.Emit(stream);
-    if (NPT_FAILED(res)) return res;
+    NPT_CHECK(res);
 
     // copy stream into a data packet and send it
     NPT_LargeSize size;
     stream.GetSize(size);
-    if (size != (NPT_Size)size) return NPT_ERROR_OUT_OF_RANGE;
+    if (size != (NPT_Size)size) NPT_CHECK(NPT_ERROR_OUT_OF_RANGE);
 
     NPT_DataBuffer packet(stream.GetData(), (NPT_Size)size);
-    return socket.Send(packet, addr);
+    NPT_CHECK_WARNING(socket.Send(packet, addr));
+    return NPT_SUCCESS;
 }
 
 /*----------------------------------------------------------------------
@@ -96,8 +98,8 @@ PLT_SsdpSender::SendSsdp(NPT_HttpResponse&  response,
     NPT_CHECK_SEVERE(FormatPacket(response, usn, target, socket, notify));
 
     // logging
-    NPT_LOG_FINER("Sending SSDP:");
-    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINER, &response);
+    NPT_String prefix = NPT_String::Format("Sending SSDP Response:");
+    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINER, prefix, &response);
 
     // use a memory stream to write all the data
     NPT_MemoryStream stream;
@@ -107,10 +109,11 @@ PLT_SsdpSender::SendSsdp(NPT_HttpResponse&  response,
     // copy stream into a data packet and send it
     NPT_LargeSize size;
     stream.GetSize(size);
-    if (size != (NPT_Size)size) return NPT_ERROR_OUT_OF_RANGE;
+    if (size != (NPT_Size)size) NPT_CHECK(NPT_ERROR_OUT_OF_RANGE);
 
     NPT_DataBuffer packet(stream.GetData(), (NPT_Size)size);
-    return socket.Send(packet, addr);
+    NPT_CHECK_WARNING(socket.Send(packet, addr));
+    return NPT_SUCCESS;
 }
 
 /*----------------------------------------------------------------------
@@ -130,6 +133,7 @@ PLT_SsdpSender::FormatPacket(NPT_HttpMessage& message,
         PLT_UPnPMessageHelper::SetNT(message, target);
     } else {
         PLT_UPnPMessageHelper::SetST(message, target);
+        PLT_UPnPMessageHelper::SetDate(message);
     }
     //PLT_HttpHelper::SetContentLength(message, 0);
 
@@ -142,20 +146,19 @@ PLT_SsdpSender::FormatPacket(NPT_HttpMessage& message,
 NPT_Result
 PLT_SsdpDeviceSearchResponseInterfaceIterator::operator()(NPT_NetworkInterface*& net_if) const 
 {
-    NPT_Result res;
     const NPT_SocketAddress* remote_addr = &m_RemoteAddr;
 
     NPT_List<NPT_NetworkInterfaceAddress>::Iterator niaddr = 
         net_if->GetAddresses().GetFirstItem();
     if (!niaddr) return NPT_SUCCESS;
 
+    // don't try to bind on port 1900 or connect will fail later
     NPT_UdpSocket socket;
+    //socket.Bind(NPT_SocketAddress(NPT_IpAddress::Any, 1900), true);
 
     // by connecting, the kernel chooses which interface to use to route to the remote
     // this is the IP we should use in our Location URL header
-    if (NPT_FAILED(res = socket.Connect(m_RemoteAddr, 5000))) {
-        return res;
-    }
+    NPT_CHECK_WARNING(socket.Connect(m_RemoteAddr, 5000));
     NPT_SocketInfo info;
     socket.GetInfo(info);
 
@@ -172,21 +175,24 @@ PLT_SsdpDeviceSearchResponseInterfaceIterator::operator()(NPT_NetworkInterface*&
     }
 
     NPT_HttpResponse response(200, "OK", NPT_HTTP_PROTOCOL_1_1);
-    PLT_UPnPMessageHelper::SetLocation(response, m_Device->GetDescriptionUrl((*niaddr).GetPrimaryAddress().ToString()));
+    PLT_UPnPMessageHelper::SetLocation(response, m_Device->GetDescriptionUrl(info.local_address.GetIpAddress().ToString()));
     PLT_UPnPMessageHelper::SetLeaseTime(response, m_Device->GetLeaseTime());
-    PLT_UPnPMessageHelper::SetServer(response, NPT_HttpServer::m_ServerHeader, false);
+    PLT_UPnPMessageHelper::SetServer(response, PLT_HTTP_DEFAULT_SERVER, false);
     response.GetHeaders().SetHeader("EXT", "");
 
-	// process search response twice to be DLNA compliant
+    // process search response twice to be DLNA compliant
 #if defined(PLATINUM_UPNP_SPECS_STRICT)
-	{
-		//NPT_UdpSocket socket;
-		NPT_CHECK_SEVERE(m_Device->SendSsdpSearchResponse(response, socket, m_ST, remote_addr));
-	}
-	NPT_System::Sleep(NPT_TimeInterval(PLT_DLNA_SSDP_DELAY_GROUP));
+    {
+        //NPT_UdpSocket socket;
+        NPT_CHECK_SEVERE(m_Device->SendSsdpSearchResponse(response, socket, m_ST, remote_addr));
+    }
+    NPT_System::Sleep(NPT_TimeInterval(PLT_DLNA_SSDP_DELAY_GROUP));
 #endif
-    NPT_CHECK_SEVERE(m_Device->SendSsdpSearchResponse(response, socket, m_ST, remote_addr));
-
+    {
+        //NPT_UdpSocket socket;
+        NPT_CHECK_SEVERE(m_Device->SendSsdpSearchResponse(response, socket, m_ST, remote_addr));
+    }
+    
     return NPT_SUCCESS;
 }
 
@@ -226,8 +232,16 @@ PLT_SsdpAnnounceInterfaceIterator::operator()(NPT_NetworkInterface*& net_if) con
     if (!niaddr) return NPT_FAILURE;
 
     // Remove disconnected interfaces
-    NPT_IpAddress addr =  (*niaddr).GetPrimaryAddress();
+    NPT_IpAddress addr = (*niaddr).GetPrimaryAddress();
     if (!addr.ToString().Compare("0.0.0.0")) return NPT_FAILURE;
+    
+    if (!m_Broadcast && 
+        !(net_if->GetFlags() & NPT_NETWORK_INTERFACE_FLAG_MULTICAST) && 
+        !(net_if->GetFlags() & NPT_NETWORK_INTERFACE_FLAG_LOOPBACK)) {
+        NPT_LOG_INFO_2("Not a valid interface: %s (flags: %d)", 
+                       (const char*)addr.ToString(), net_if->GetFlags());
+        return NPT_FAILURE;
+    }
 
     NPT_HttpUrl            url;
     NPT_UdpMulticastSocket multicast_socket;
@@ -238,25 +252,26 @@ PLT_SsdpAnnounceInterfaceIterator::operator()(NPT_NetworkInterface*& net_if) con
         url = NPT_HttpUrl((*niaddr).GetBroadcastAddress().ToString(), 1900, "*");
         socket = &broadcast_socket;
     } else {
-        url = NPT_HttpUrl("239.255.255.250", 1900, "*");
+        url = NPT_HttpUrl("239.255.255.250", 1900, "*");    
+        NPT_CHECK_SEVERE(multicast_socket.SetInterface(addr));
         socket = &multicast_socket;
-        NPT_CHECK_SEVERE(((NPT_UdpMulticastSocket*)socket)->SetInterface(addr));
+        multicast_socket.SetTimeToLive(PLT_Constants::GetInstance().GetAnnounceMulticastTimeToLive());
     }
-
+    
     NPT_HttpRequest req(url, "NOTIFY", NPT_HTTP_PROTOCOL_1_1);
     PLT_HttpHelper::SetHost(req, "239.255.255.250:1900");
     
     // put a location only if alive message
-    if (m_IsByeBye == false) {
+    if (!m_IsByeBye) {
         PLT_UPnPMessageHelper::SetLocation(req, m_Device->GetDescriptionUrl(addr.ToString()));
     }
 
     NPT_CHECK_SEVERE(m_Device->Announce(req, *socket, m_IsByeBye));
-    
+
 #if defined(PLATINUM_UPNP_SPECS_STRICT)
-	// delay alive only as we don't want to delay when stopping
-	if (!m_IsByeBye) NPT_System::Sleep(NPT_TimeInterval(PLT_DLNA_SSDP_DELAY_GROUP));
-	NPT_CHECK_SEVERE(m_Device->Announce(req, *socket, m_IsByeBye));
+    // delay alive only as we don't want to delay when stopping
+    if (!m_IsByeBye) NPT_System::Sleep(NPT_TimeInterval(PLT_DLNA_SSDP_DELAY_GROUP));
+    NPT_CHECK_SEVERE(m_Device->Announce(req, *socket, m_IsByeBye));
 #endif
 
     return NPT_SUCCESS;
@@ -268,52 +283,41 @@ PLT_SsdpAnnounceInterfaceIterator::operator()(NPT_NetworkInterface*& net_if) con
 void
 PLT_SsdpDeviceAnnounceTask::DoRun()
 {
-    NPT_Result res = NPT_SUCCESS;
     NPT_List<NPT_NetworkInterface*> if_list;
 
     while (1) {
-        NPT_CHECK_LABEL_FATAL(PLT_UPnPMessageHelper::GetNetworkInterfaces(if_list, true),
+        NPT_CHECK_LABEL_FATAL(PLT_UPnPMessageHelper::GetNetworkInterfaces(if_list, false),
                               cleanup);
 
         // if we're announcing our arrival, sends a byebye first (NMPR compliance)
         if (m_IsByeByeFirst == true) {
             m_IsByeByeFirst = false;
-            res = if_list.Apply(PLT_SsdpAnnounceInterfaceIterator(m_Device, true, m_IsBroadcast));
-            if (NPT_FAILED(res)) goto cleanup;
-
-            // schedule to announce alive in 300 ms
-            if (NPT_FAILED(res) || IsAborting(300)) break;
-        }
             
-        res = if_list.Apply(PLT_SsdpAnnounceInterfaceIterator(m_Device, false, m_IsBroadcast));
+            if (m_ExtraBroadcast) {
+                if_list.Apply(PLT_SsdpAnnounceInterfaceIterator(m_Device, true, m_ExtraBroadcast));
+            }
+            
+            // multicast now
+            if_list.Apply(PLT_SsdpAnnounceInterfaceIterator(m_Device, true, false));
+            
+            // schedule to announce alive in 200 ms
+            if (IsAborting(200)) break;
+        }
+        
+        if (m_ExtraBroadcast) {
+            if_list.Apply(PLT_SsdpAnnounceInterfaceIterator(m_Device, false, m_ExtraBroadcast));
+        }
+        
+        // multicast now
+        if_list.Apply(PLT_SsdpAnnounceInterfaceIterator(m_Device, false, false));
+        
         
 cleanup:
         if_list.Apply(NPT_ObjectDeleter<NPT_NetworkInterface>());
         if_list.Clear();
 
-        if (NPT_FAILED(res) || IsAborting((NPT_Timeout)m_Repeat.ToMillis())) break;
+        if (IsAborting((NPT_Timeout)m_Repeat.ToMillis())) break;
     };
-}
-
-/*----------------------------------------------------------------------
-|    PLT_SsdpListenTask::DoInit
-+---------------------------------------------------------------------*/
-void
-PLT_SsdpListenTask::DoInit() 
-{
-    if (m_Multicast) {
-        if (m_JoinHard) {
-            NPT_List<NPT_IpAddress> ips;
-            PLT_UPnPMessageHelper::GetIPAddresses(ips);
-
-            /* Join multicast group for every ip we found */
-            ips.Apply(PLT_SsdpInitMulticastIterator((NPT_UdpMulticastSocket*)m_Socket));
-        } else {
-            NPT_IpAddress addr;
-            addr.ResolveName("239.255.255.250");
-            ((NPT_UdpMulticastSocket*)m_Socket)->JoinGroup(addr, NPT_IpAddress::Any);
-        }
-    }
 }
 
 /*----------------------------------------------------------------------
@@ -331,12 +335,21 @@ PLT_SsdpListenTask::GetInputStream(NPT_InputStreamReference& stream)
         if (NPT_FAILED(res)) {
             return res;
         }
-        // for datagrams, we can't simply write to the socket directly
-        // we need to write into a datagramstream (buffer) that redirects to the real stream when flushed
+        // for datagrams, we can't simply read from the socket directly
+        // we need to read datagram into a buffer
         m_Datagram = new PLT_InputDatagramStream((NPT_UdpSocket*)m_Socket);
         stream = m_Datagram;
         return NPT_SUCCESS;
     }
+}
+
+/*----------------------------------------------------------------------
+|    PLT_SsdpListenTask::GetInfo
++---------------------------------------------------------------------*/
+void 
+PLT_SsdpListenTask::DoAbort()
+{
+    PLT_HttpServerSocketTask::DoAbort();
 }
 
 /*----------------------------------------------------------------------
@@ -403,7 +416,7 @@ PLT_SsdpSearchTask::DoAbort()
 }
 
 /*----------------------------------------------------------------------
-|   PLT_HttpServerSocketTask::DoRun
+|   PLT_SsdpSearchTask::DoRun
 +---------------------------------------------------------------------*/
 void
 PLT_SsdpSearchTask::DoRun()
@@ -429,11 +442,13 @@ PLT_SsdpSearchTask::DoRun()
                                          &address));
         NPT_CHECK_LABEL_SEVERE(NPT_HttpClient::WriteRequest(
                                    *output_stream.AsPointer(), 
-                                   *m_Request), 
+                                   *m_Request,
+                                   false), 
                                done);
         NPT_CHECK_LABEL_SEVERE(NPT_HttpClient::WriteRequest(
                                    *output_stream.AsPointer(), 
-                                   *m_Request), 
+                                   *m_Request,
+                                   false), 
                                done);
         output_stream = NULL;
 
@@ -449,6 +464,7 @@ PLT_SsdpSearchTask::DoRun()
             NPT_InputStreamReference stream = input_stream;
             NPT_Result res = NPT_HttpClient::ReadResponse(
                 stream, 
+                false,
                 false,
                 response);
             // callback to process response
@@ -466,6 +482,7 @@ PLT_SsdpSearchTask::DoRun()
                 response = NULL;
             } else if (res != NPT_ERROR_TIMEOUT) {
                 NPT_LOG_WARNING_1("PLT_SsdpSearchTask got an error (%d) waiting for response", res);
+                NPT_System::Sleep(NPT_TimeInterval(.5f));
             }
 
             input_stream = NULL;

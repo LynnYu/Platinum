@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -113,16 +114,12 @@ typedef struct {
 } PLT_Description;
 
 typedef struct {
-    NPT_String album_art_uri;
-    NPT_String album_art_uri_dlna_profile;
     NPT_String uri;
     NPT_String dlna_profile;
 } PLT_AlbumArtInfo;
 
 typedef struct {
-    PLT_AlbumArtInfo album_art; // multiple?
-    NPT_String album_art_uri; //TODO: can be multiple
-    NPT_String album_art_uri_dlna_profile;
+    NPT_List<PLT_AlbumArtInfo> album_arts;
     NPT_String artist_discography_uri;
     NPT_String lyrics_uri;
     NPT_List<NPT_String> relations; // dc:relation
@@ -195,7 +192,7 @@ public:
                                     const PLT_HttpRequestContext* context = NULL);
 
     virtual NPT_Result Reset();
-    virtual NPT_Result ToDidl(NPT_String filter, NPT_String& didl);
+    virtual NPT_Result ToDidl(const NPT_String& filter, NPT_String& didl);
     virtual NPT_Result ToDidl(NPT_UInt32 mask, NPT_String& didl);
     virtual NPT_Result FromDidl(NPT_XmlElementNode* entry);
 
@@ -247,7 +244,7 @@ public:
     virtual ~PLT_MediaItem();
 
     // PLT_MediaObject methods
-    NPT_Result ToDidl(NPT_String filter, NPT_String& didl);
+    NPT_Result ToDidl(const NPT_String& filter, NPT_String& didl);
     NPT_Result ToDidl(NPT_UInt32 mask, NPT_String& didl);
     NPT_Result FromDidl(NPT_XmlElementNode* entry);
 };
@@ -270,7 +267,7 @@ public:
 
     // PLT_MediaObject methods
     NPT_Result Reset();
-    NPT_Result ToDidl(NPT_String filter, NPT_String& didl);
+    NPT_Result ToDidl(const NPT_String& filter, NPT_String& didl);
     NPT_Result ToDidl(NPT_UInt32 mask, NPT_String& didl);
     NPT_Result FromDidl(NPT_XmlElementNode* entry);
 

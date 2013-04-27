@@ -47,16 +47,17 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\..\..\Neptune\Source\Core;..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\..\Neptune\Source\Core;..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Extras;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;NPT_CONFIG_ENABLE_LOGGING;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ProgramDataBaseFileName>$(OutDir)Platinum.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)Platinum.lib</OutputFile>
@@ -68,13 +69,14 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\..\..\..\Neptune\Source\Core;..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\..\Neptune\Source\Core;..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Extras;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;NPT_CONFIG_ENABLE_LOGGING;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ProgramDataBaseFileName>$(OutDir)Platinum.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)Platinum.lib</OutputFile>
@@ -99,6 +101,8 @@
     <ClCompile Include="..\..\..\..\Source\Core\PltHttpServer.cpp" />
     <ClCompile Include="..\..\..\..\Source\Core\PltHttpServerTask.cpp" />
     <ClCompile Include="..\..\..\..\Source\Core\PltIconsData.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Core\PltMimeType.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Core\PltProtocolInfo.cpp" />
     <ClCompile Include="..\..\..\..\Source\Core\PltService.cpp" />
     <ClCompile Include="..\..\..\..\Source\Core\PltSsdp.cpp" />
     <ClCompile Include="..\..\..\..\Source\Core\PltStateVariable.cpp" />
@@ -114,8 +118,6 @@
     <ClCompile Include="..\..\..\..\Source\Devices\MediaServer\PltMediaCache.cpp" />
     <ClCompile Include="..\..\..\..\Source\Devices\MediaServer\PltMediaItem.cpp" />
     <ClCompile Include="..\..\..\..\Source\Devices\MediaServer\PltMediaServer.cpp" />
-    <ClCompile Include="..\..\..\..\Source\Devices\MediaServer\PltMimeType.cpp" />
-    <ClCompile Include="..\..\..\..\Source\Devices\MediaServer\PltProtocolInfo.cpp" />
     <ClCompile Include="..\..\..\..\Source\Devices\MediaServer\PltSyncMediaBrowser.cpp" />
     <ClCompile Include="..\..\..\..\Source\Devices\MediaRenderer\AVTransportSCPD.cpp" />
     <ClCompile Include="..\..\..\..\Source\Devices\MediaRenderer\PltMediaController.cpp" />
@@ -135,8 +137,8 @@
     <ClCompile Include="..\..\..\..\Source\Extras\PltStreamPump.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Source\Devices\MediaServer\PltMimeType.h" />
-    <ClInclude Include="..\..\..\..\Source\Devices\MediaServer\PltProtocolInfo.h" />
+    <ClInclude Include="..\..\..\..\Source\Core\PltMimeType.h" />
+    <ClInclude Include="..\..\..\..\Source\Core\PltProtocolInfo.h" />
     <ClInclude Include="..\..\..\..\Source\Platinum\Platinum.h" />
     <ClInclude Include="..\..\..\..\Source\Core\PltAction.h" />
     <ClInclude Include="..\..\..\..\Source\Core\PltArgument.h" />
@@ -152,7 +154,6 @@
     <ClInclude Include="..\..\..\..\Source\Core\PltHttpServer.h" />
     <ClInclude Include="..\..\..\..\Source\Core\PltHttpServerListener.h" />
     <ClInclude Include="..\..\..\..\Source\Core\PltHttpServerTask.h" />
-    <ClInclude Include="..\..\..\..\Source\Core\PltLeaks.h" />
     <ClInclude Include="..\..\..\..\Source\Core\PltService.h" />
     <ClInclude Include="..\..\..\..\Source\Core\PltSsdp.h" />
     <ClInclude Include="..\..\..\..\Source\Core\PltSsdpListener.h" />

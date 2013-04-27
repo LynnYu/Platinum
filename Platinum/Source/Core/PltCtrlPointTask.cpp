@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -42,12 +43,14 @@
 /*----------------------------------------------------------------------
 |    PLT_CtrlPointGetDescriptionTask::PLT_CtrlPointGetDescriptionTask
 +---------------------------------------------------------------------*/
-PLT_CtrlPointGetDescriptionTask::PLT_CtrlPointGetDescriptionTask(const NPT_HttpUrl&       url,
-                                                                 PLT_CtrlPoint*           ctrl_point, 
-                                                                 PLT_DeviceDataReference& root_device) :
+PLT_CtrlPointGetDescriptionTask::PLT_CtrlPointGetDescriptionTask(const NPT_HttpUrl& url,
+                                                                 PLT_CtrlPoint*     ctrl_point,
+                                                                 NPT_TimeInterval   leasetime,
+                                                                 NPT_String         uuid) :
     PLT_HttpClientSocketTask(new NPT_HttpRequest(url, "GET", NPT_HTTP_PROTOCOL_1_1)), 
-    m_CtrlPoint(ctrl_point), 
-    m_RootDevice(root_device) 
+    m_CtrlPoint(ctrl_point),
+    m_LeaseTime(leasetime),
+    m_UUID(uuid)
 {
 }
 
@@ -72,31 +75,34 @@ PLT_CtrlPointGetDescriptionTask::ProcessResponse(NPT_Result                    r
         res, 
         request, 
         context, 
-        response, 
-        m_RootDevice);
+        response,
+        m_LeaseTime,
+        m_UUID);
 }
 
 /*----------------------------------------------------------------------
-|    PLT_CtrlPointGetSCPDTask::PLT_CtrlPointGetSCPDTask
+|    PLT_CtrlPointGetSCPDsTask::PLT_CtrlPointGetSCPDsTask
 +---------------------------------------------------------------------*/
-PLT_CtrlPointGetSCPDTask::PLT_CtrlPointGetSCPDTask(PLT_CtrlPoint* ctrl_point) :  
+PLT_CtrlPointGetSCPDsTask::PLT_CtrlPointGetSCPDsTask(PLT_CtrlPoint*           ctrl_point, 
+                                                     PLT_DeviceDataReference& root_device) :  
     PLT_HttpClientSocketTask(), 
-    m_CtrlPoint(ctrl_point)
+    m_CtrlPoint(ctrl_point),
+    m_RootDevice(root_device)
 {
 }
 
 /*----------------------------------------------------------------------
-|    PLT_CtrlPointGetSCPDTask::~PLT_CtrlPointGetSCPDTask
+|    PLT_CtrlPointGetSCPDsTask::~PLT_CtrlPointGetSCPDsTask
 +---------------------------------------------------------------------*/
-PLT_CtrlPointGetSCPDTask::~PLT_CtrlPointGetSCPDTask() 
+PLT_CtrlPointGetSCPDsTask::~PLT_CtrlPointGetSCPDsTask() 
 {
 }
 
 /*----------------------------------------------------------------------
-|    PLT_CtrlPointGetSCPDTask::ProcessResponse
+|    PLT_CtrlPointGetSCPDsTask::ProcessResponse
 +---------------------------------------------------------------------*/
 NPT_Result 
-PLT_CtrlPointGetSCPDTask::ProcessResponse(NPT_Result                    res, 
+PLT_CtrlPointGetSCPDsTask::ProcessResponse(NPT_Result                    res, 
                                           const NPT_HttpRequest&        request, 
                                           const NPT_HttpRequestContext& context, 
                                           NPT_HttpResponse*             response)
@@ -143,7 +149,7 @@ PLT_CtrlPointInvokeActionTask::ProcessResponse(NPT_Result                    res
     NPT_COMPILER_UNUSED(request);
     NPT_COMPILER_UNUSED(context);
 
-    return m_CtrlPoint->ProcessActionResponse(res, response, m_Action, m_Userdata);
+    return m_CtrlPoint->ProcessActionResponse(res, request, context, response, m_Action, m_Userdata);
 }
 
 /*----------------------------------------------------------------------

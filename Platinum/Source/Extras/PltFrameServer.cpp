@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -36,7 +37,7 @@
 +---------------------------------------------------------------------*/
 #include "PltFrameStream.h"
 #include "PltFrameServer.h"
-#include "PltUPnPHelper.h"
+#include "PltUtilities.h"
 
 NPT_SET_LOCAL_LOGGER("platinum.media.server.frame")
 
@@ -52,7 +53,7 @@ class PLT_SocketPolicyServer : public NPT_Thread
 {
 public:
     PLT_SocketPolicyServer(const char* policy, 
-                           NPT_UInt32  port = 0,
+                           NPT_IpPort  port = 0,
                            const char* authorized_ports = "5900") :
         m_Policy(policy),
         m_Port(port),
@@ -71,7 +72,7 @@ public:
         int retries = 100;
         do {    
             int random = NPT_System::GetRandomInteger();
-            int port = (unsigned short)(50000 + (random % 15000));
+            NPT_IpPort port = (unsigned short)(50000 + (random % 15000));
                         
             result = m_Socket.Bind(
                 NPT_SocketAddress(NPT_IpAddress::Any, m_Port?m_Port:port), 
@@ -135,7 +136,7 @@ public:
     
     NPT_TcpServerSocket m_Socket;
     NPT_String          m_Policy;
-    NPT_UInt32          m_Port;
+    NPT_IpPort          m_Port;
     NPT_String          m_AuthorizedPorts;
     bool                m_Aborted;
 };
@@ -148,8 +149,7 @@ PLT_HttpStreamRequestHandler::SetupResponse(NPT_HttpRequest&              reques
                                             const NPT_HttpRequestContext& context,
                                             NPT_HttpResponse&             response)
 {
-    NPT_LOG_FINE("Received Request:");
-    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINE, &request);
+    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINE, "PLT_HttpStreamRequestHandler::SetupResponse:", &request);
 
     if (request.GetMethod().Compare("GET") && 
         request.GetMethod().Compare("HEAD")) {
@@ -199,6 +199,7 @@ PLT_FrameServer::PLT_FrameServer(const char*          resource_name,
     AddRequestHandler(
         new PLT_HttpStreamRequestHandler(stream_validator), 
         "/" + resource, 
+        true,
         true);
 }
 

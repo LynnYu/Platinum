@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -65,7 +66,6 @@
 #define PLT_FILTER_MASK_SERIESTITLE                 0x00002000
 #define PLT_FILTER_MASK_EPISODE                     0x00004000
 #define PLT_FILTER_MASK_TITLE                       0x00008000
-#define PLT_FILTER_MASK_SEARCHCLASS					0x00010000
 
 #define PLT_FILTER_MASK_RES                         0x00010000
 #define PLT_FILTER_MASK_RES_DURATION                0x00020000
@@ -77,7 +77,12 @@
 #define PLT_FILTER_MASK_RES_NRAUDIOCHANNELS			0x00800000
 #define PLT_FILTER_MASK_RES_SAMPLEFREQUENCY			0x01000000
 
+#define PLT_FILTER_MASK_LONGDESCRIPTION             0x02000000
+#define PLT_FILTER_MASK_ICON                        0x04000000
+
 #define PLT_FILTER_MASK_TOC							0x02000000
+#define PLT_FILTER_MASK_SEARCHCLASS					0x04000000
+#define PLT_FILTER_MASK_REFID                       0x08000000
 
 #define PLT_FILTER_FIELD_TITLE                      "dc:title"
 #define PLT_FILTER_FIELD_CREATOR                    "dc:creator"
@@ -88,7 +93,10 @@
 #define PLT_FILTER_FIELD_ALBUM                      "upnp:album"
 #define PLT_FILTER_FIELD_GENRE                      "upnp:genre"
 #define PLT_FILTER_FIELD_ALBUMARTURI                "upnp:albumArtURI"
-#define PLT_FILTER_FIELD_DESCRIPTION                "upnp:longDescription"
+#define PLT_FILTER_FIELD_ALBUMARTURI_DLNAPROFILEID  "upnp:albumArtURI@dlna:profileID"
+#define PLT_FILTER_FIELD_DESCRIPTION                "dc:description"
+#define PLT_FILTER_FIELD_LONGDESCRIPTION            "upnp:longDescription"
+#define PLT_FILTER_FIELD_ICON                       "upnp:icon"
 #define PLT_FILTER_FIELD_ORIGINALTRACK              "upnp:originalTrackNumber"
 #define PLT_FILTER_FIELD_PROGRAMTITLE               "upnp:programTitle"
 #define PLT_FILTER_FIELD_SERIESTITLE                "upnp:seriesTitle"
@@ -98,6 +106,7 @@
 #define PLT_FILTER_FIELD_CHILDCOUNT                 "@childcount"
 #define PLT_FILTER_FIELD_CONTAINER_CHILDCOUNT       "container@childCount"
 #define PLT_FILTER_FIELD_CONTAINER_SEARCHABLE       "container@searchable"
+#define PLT_FILTER_FIELD_REFID                      "@refID"
 
 #define PLT_FILTER_FIELD_RES                        "res"
 #define PLT_FILTER_FIELD_RES_DURATION               "res@duration"
@@ -114,6 +123,7 @@ extern const char* didl_header;
 extern const char* didl_footer;
 extern const char* didl_namespace_dc;
 extern const char* didl_namespace_upnp;
+extern const char* didl_namespace_dlna;
 
 /*----------------------------------------------------------------------
 |   PLT_Didl
@@ -126,9 +136,9 @@ extern const char* didl_namespace_upnp;
 class PLT_Didl
 {
 public:
-    static NPT_Result  ToDidl(PLT_MediaObject& object, 
-                              NPT_String       filter, 
-                              NPT_String&      didl);
+    static NPT_Result  ToDidl(PLT_MediaObject&  object, 
+                              const NPT_String& filter, 
+                              NPT_String&       didl);
     static NPT_Result  FromDidl(const char* didl, 
                                 PLT_MediaObjectListReference& objects);
     static void        AppendXmlEscape(NPT_String& out, const char* in);
@@ -142,7 +152,7 @@ public:
         return res;
     }
 
-    static NPT_UInt32  ConvertFilterToMask(NPT_String filter);
+    static NPT_UInt32  ConvertFilterToMask(const NPT_String& filter);
 };
 
 #endif /* _PLT_DIDL_H_ */

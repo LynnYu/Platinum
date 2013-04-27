@@ -75,14 +75,25 @@ uint64_t SSL_GetRandomSeed();
 #define STDCALL
 #define EXP_FUNC
 
-#define SSL_CTX_MUTEX_INIT(A)
-#define SSL_CTX_MUTEX_DESTROY(A)
-#define SSL_CTX_LOCK(A)
-#define SSL_CTX_UNLOCK(A)
+#if defined(__cplusplus) 
+typedef class NPT_Mutex* SSL_CTX_MUTEX_TYPE;
+#else
+typedef void* SSL_CTX_MUTEX_TYPE;
+#endif
+void SSL_Mutex_Create(SSL_CTX_MUTEX_TYPE* mutex);
+void SSL_Mutex_Destroy(SSL_CTX_MUTEX_TYPE mutex);
+void SSL_Mutex_Lock(SSL_CTX_MUTEX_TYPE mutex);
+void SSL_Mutex_Unlock(SSL_CTX_MUTEX_TYPE mutex);
+#define SSL_CTX_MUTEX_INIT(_mutex) SSL_Mutex_Create(&_mutex)
+#define SSL_CTX_MUTEX_DESTROY(_mutex) do {SSL_Mutex_Destroy(_mutex); _mutex = NULL; } while(0)
+#define SSL_CTX_LOCK(_mutex) SSL_Mutex_Lock(_mutex)
+#define SSL_CTX_UNLOCK(_mutex) SSL_Mutex_Unlock(_mutex)
 
 #define TTY_FLUSH()
 #define SOCKET_BLOCK(X)
 #define SOCKET_READ(s,b,z) (s)->Read((s), (b), (z))
 #define SOCKET_WRITE(s,b,z) (s)->Write((s), (b), (z))
+
+void SSL_Sha256_ComputeDigest(const unsigned char* buffer, unsigned int buffer_length, unsigned char* digest);
 
 #endif /* _OS_PORT_H_ */

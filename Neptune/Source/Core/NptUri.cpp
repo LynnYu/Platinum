@@ -183,6 +183,7 @@ Appendix A.  Collected ABNF for URI
 +---------------------------------------------------------------------*/
 const char* const
 NPT_Uri::PathCharsToEncode = NPT_URI_ALWAYS_ENCODE "?#[]";
+//NPT_Uri::PathCharsToEncode = NPT_URI_ALWAYS_ENCODE "?#[]:/";
 
 /*----------------------------------------------------------------------
 |   NPT_Uri::QueryCharsToEncode
@@ -366,7 +367,7 @@ NPT_UrlQuery::Parse(const char* query)
     bool        in_name = true;
     do {
         if (*cursor == '\0' || *cursor == '&') {
-            if (!name.IsEmpty() && !value.IsEmpty()) {
+            if (!name.IsEmpty()) {
                 AddField(name, value, true);   
             }
             name.SetLength(0);
@@ -535,7 +536,7 @@ NPT_Url::Parse(const char* url, NPT_UInt16 default_port)
             break;
 
           case NPT_URL_PARSER_STATE_HOST:
-            if (c == ':' || c == '/' || c == '\0') {
+            if (c == ':' || c == '/' || c == '\0' || c == '?' || c == '#') {
                 m_Host.Assign(mark, (NPT_Size)(url-1-mark));
                 if (c == ':') {
                     mark = url;
@@ -696,6 +697,18 @@ NPT_Url::ParsePathPlus(const char* path_plus)
     m_Fragment.SetLength(0);
     m_HasQuery = false;
     m_HasFragment = false;
+
+#ifdef _WIN32
+    // Skip the leading '/' if there is an absolute path starting with
+    // a drive letter on Windows.
+    if (path_plus[0] == '/' && 
+        ((path_plus[1] >= 'a' && path_plus[1] <= 'z') ||
+         (path_plus[1] >= 'A' && path_plus[1] <= 'Z')) &&
+        path_plus[2] == ':') 
+    {
+        ++path_plus;
+    }
+#endif
 
     // intialize the parser
     NPT_UrlParserState state = NPT_URL_PARSER_STATE_PATH;

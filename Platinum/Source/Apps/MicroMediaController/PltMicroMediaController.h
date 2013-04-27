@@ -17,6 +17,7 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
+| licensing@plutinosoft.com
 | 
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -115,7 +116,6 @@ private:
     void    HandleCmd_setmr();
     void    HandleCmd_open();
     void    HandleCmd_play();
-	void	HandleCmd_pause();
     void    HandleCmd_seek(const char* command);
     void    HandleCmd_stop();
     void    HandleCmd_mute();

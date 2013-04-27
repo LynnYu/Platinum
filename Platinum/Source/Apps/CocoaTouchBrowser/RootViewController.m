@@ -17,6 +17,7 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
+| licensing@plutinosoft.com
 | 
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -32,73 +33,9 @@
 ****************************************************************/
 
 #import "RootViewController.h"
-#import "ServerViewController.h"
-#import "SpeakerViewController.h"
-#import <objc/runtime.h>
 
-char kSpeakerControllerKey = 'a';
 
 @implementation RootViewController
-
-@synthesize upnp;
-@synthesize controller;
-@synthesize list;
-@synthesize speakerListController;
-@synthesize selectedSong;
-
-- (void)awakeFromNib {
-
-	self.upnp = [[PPUPnP alloc] init];
-	
-	self.controller = [[PPMediaController alloc] initWithUPnP:self.upnp];
-    
-    self.speakerListController = [[SpeakerListController alloc] initWithController:self.controller andRootViewController:self];
-	
-    self.controller.delegate = self;
-	
-	int res = [self.upnp start];
-	NSLog(@"awake. start result:%d", res);
-	
-	self.list = [NSMutableArray array];
-}
-
-- (IBAction)showSpeakers:(id)sender {
-	UINavigationController *modal = [[UINavigationController alloc] initWithRootViewController:self.speakerListController];
-	[self.navigationController presentModalViewController:modal animated:YES];
-}
-
-- (BOOL)shouldAddServer:(PPMediaDevice *)server {
-	[self.list addObject:server];
-	[self.tableView reloadData];
-	return YES;
-}
-
-- (void)didRemoveServer:(PPMediaDevice *)server; {
-	[self.list removeObject:server];
-	[self.tableView reloadData];
-}
-
-- (BOOL)shouldAddSpeaker:(PPMediaDevice *)speaker {
-	[self.speakerListController addSpeaker:speaker];
-	return YES;
-}
-
-- (void)didRemoveSpeaker:(PPMediaDevice *)speaker {
-	[self.speakerListController removeSpeaker:speaker];
-}
-
-- (void)browseDidRespond:(PPMediaObject *)updatedObject {
-	if ( updatedObject ) {
-        ServerViewController *item = [updatedObject getOwner];
-        [item listUpdated];
-	}
-}
-
-- (void)speakerUpdated:(PPMediaDevice *)speaker {
-	SpeakerViewController *associatedController =
-		(SpeakerViewController *)objc_getAssociatedObject(speaker, &kSpeakerControllerKey);
-	[associatedController speakerUpdated:speaker];
-}
 
 /*
 - (void)viewDidLoad {
@@ -160,7 +97,7 @@ char kSpeakerControllerKey = 'a';
 
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [self.list count];
+    return 0;
 }
 
 
@@ -175,30 +112,22 @@ char kSpeakerControllerKey = 'a';
     }
     
 	// Configure the cell.
-	PPMediaDevice *device = [self.list objectAtIndex:[indexPath row]];
-	cell.textLabel.text = [device name];
 
     return cell;
 }
 
 
 
-
+/*
 // Override to support row selection in the table view.
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 
-	PPMediaDevice *device = [self.list objectAtIndex:[indexPath row]];
-	
-	ServerViewController *next = [[ServerViewController alloc] initWithController:self.controller server:device container:[device rootContainer]];
-	
-	[self.navigationController pushViewController:next animated:YES];
-	
     // Navigation logic may go here -- for example, create and push another view controller.
 	// AnotherViewController *anotherViewController = [[AnotherViewController alloc] initWithNibName:@"AnotherView" bundle:nil];
 	// [self.navigationController pushViewController:anotherViewController animated:YES];
 	// [anotherViewController release];
 }
-
+*/
 
 
 /*
@@ -242,12 +171,6 @@ char kSpeakerControllerKey = 'a';
 
 
 - (void)dealloc {
-	[self.upnp stop];
-	
-	[self.list release];
-	[self.controller release];
-	[self.upnp release];
-	
     [super dealloc];
 }
 

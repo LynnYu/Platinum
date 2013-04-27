@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -200,6 +201,9 @@ public:
     NPT_Result operator()(NPT_IpAddress& if_addr) const {
         NPT_IpAddress addr;
         addr.ResolveName("239.255.255.250");
+        // OSX bug, since we're reusing the socket, we need to leave group first
+        // before joining it
+        m_Socket->LeaveGroup(addr, if_addr);
         return m_Socket->JoinGroup(addr, if_addr);
     }
 
@@ -220,10 +224,10 @@ public:
     PLT_SsdpDeviceAnnounceTask(PLT_DeviceHost*  device, 
                                NPT_TimeInterval repeat,
                                bool             is_byebye_first = false,
-                               bool             broadcast = false) : 
+                               bool             extra_broadcast = false) : 
         m_Device(device), 
         m_Repeat(repeat), m_IsByeByeFirst(is_byebye_first), 
-        m_IsBroadcast(broadcast) {}
+        m_ExtraBroadcast(extra_broadcast) {}
 
 protected:
     virtual ~PLT_SsdpDeviceAnnounceTask() {}
@@ -235,7 +239,7 @@ protected:
     PLT_DeviceHost*             m_Device;
     NPT_TimeInterval            m_Repeat;
     bool                        m_IsByeByeFirst;
-    bool                        m_IsBroadcast;
+    bool                        m_ExtraBroadcast;
 };
 
 /*----------------------------------------------------------------------
@@ -296,16 +300,13 @@ private:
 class PLT_SsdpListenTask : public PLT_HttpServerSocketTask
 {
 public:
-    PLT_SsdpListenTask(NPT_Socket* socket, 
-                       bool multicast = true,
-                       bool join_hard = false) : 
-        PLT_HttpServerSocketTask(socket, true), 
-        m_Multicast(multicast), m_JoinHard(join_hard) {
+    PLT_SsdpListenTask(NPT_Socket* socket) : 
+        PLT_HttpServerSocketTask(socket, true) {
         // Change read time out for UDP because iPhone 3.0 seems to hang
         // after reading everything from the socket even though
         // more stuff arrived
-#if defined(TARGET_OS_IPHONE)
-        m_Socket->SetReadTimeout(1000);
+#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
+        m_Socket->SetReadTimeout(10000);
 #endif
     }
 
@@ -320,12 +321,12 @@ public:
         m_Listeners.Remove(listener);
         return NPT_SUCCESS;
     }
+    
+    // PLT_Task methods
+    void DoAbort();
 
 protected:
     virtual ~PLT_SsdpListenTask() {}
-
-    // PLT_ThreadTask methods
-    virtual void DoInit();
 
     // PLT_HttpServerSocketTask methods
     NPT_Result GetInputStream(NPT_InputStreamReference& stream);
@@ -336,8 +337,6 @@ protected:
 
 protected:
     PLT_InputDatagramStreamReference  m_Datagram;
-    bool                              m_Multicast;
-    bool                              m_JoinHard;
     NPT_List<PLT_SsdpPacketListener*> m_Listeners;
     NPT_Mutex                         m_Mutex;
 };

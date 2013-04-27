@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -123,6 +124,8 @@ public:
     /**
      Constructor
      @param action_desc the action description
+     If you intend to send an action, you need to use the second constructor
+     and pass the root device of the device you wish to control.
      */
     PLT_Action(PLT_ActionDesc& action_desc);
     
@@ -131,7 +134,9 @@ public:
      @param action_desc the action description
      @param root_device a reference to the root device of the service the action
      is associated with. This insures that the device won't be deleted if it goes 
-     away while we're waiting for a response for this action.
+     away while we're waiting for a response for this action. This is important because
+     we only keep a reference to the PLT_ActionDesc which is own by the service operated
+     by the device (or embedded device).
      */
     PLT_Action(PLT_ActionDesc& action_desc, PLT_DeviceDataReference& root_device);
     ~PLT_Action();

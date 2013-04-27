@@ -37,6 +37,7 @@
 +---------------------------------------------------------------------*/
 #include "NptConfig.h"
 #include "NptStreams.h"
+#include "NptFile.h"
 
 /*----------------------------------------------------------------------
 |   class references
@@ -77,7 +78,16 @@ public:
      * Inflate (i.e decompress) a buffer
      */
     static NPT_Result Inflate(const NPT_DataBuffer& in,
-                              NPT_DataBuffer&       out);                       
+                              NPT_DataBuffer&       out);   
+    
+    /**
+     * Deflate (i.e compress) a file
+     */
+    static NPT_Result Deflate(NPT_File& in,
+                              NPT_File& out,
+                              int       compression_level = NPT_ZIP_COMPRESSION_LEVEL_DEFAULT,
+                              Format    format = GZIP);
+    
 };
 
 /*----------------------------------------------------------------------

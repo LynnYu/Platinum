@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -55,7 +56,8 @@ class PLT_InputDatagramStream : public NPT_InputStream
 {
 public:
     // methods
-    PLT_InputDatagramStream(NPT_UdpSocket* socket);
+    PLT_InputDatagramStream(NPT_UdpSocket* socket,
+                            NPT_Size       buffer_size = 2000);
     virtual ~PLT_InputDatagramStream();
     
     NPT_Result GetInfo(NPT_SocketInfo& info);
@@ -74,6 +76,8 @@ public:
 protected:
     NPT_UdpSocket*      m_Socket;
     NPT_SocketInfo      m_Info;
+    NPT_DataBuffer      m_Buffer;
+    NPT_Position        m_BufferOffset;
 };
 
 typedef NPT_Reference<PLT_InputDatagramStream> PLT_InputDatagramStreamReference;

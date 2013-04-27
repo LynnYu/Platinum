@@ -17,6 +17,7 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
+| licensing@plutinosoft.com
 | 
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -40,7 +41,7 @@
 #include "PltMediaServer.h"
 #include "PltHttpServer.h"
 #include "PltDidl.h"
-#include "PltXmlHelper.h"
+#include "PltUtilities.h"
 
 NPT_SET_LOCAL_LOGGER("platinum.apps.crawler")
 
@@ -299,7 +300,7 @@ CMediaCrawler::OnBrowseDevice(PLT_ActionReference&          action,
 
     // create a container for our result
     // this will be filled in by OnBrowseResponse
-    CMediaCrawlerBrowseInfoReference browse_info(new CMediaCrawlerBrowseInfo());
+    CMediaCrawlerBrowseInfoReference browse_info(new CMediaCrawlerBrowseInfo(), true);
     browse_info->shared_var.SetValue(0);
 
     // send off the browse packet.  Note that this will
@@ -351,10 +352,6 @@ CMediaCrawler::OnBrowseResponse(NPT_Result               res,
     (*info)->res = res;
     (*info)->code = action->GetErrorCode();
 
-    if (NPT_FAILED(res) || action->GetErrorCode() != 0) {
-        goto bad_action;
-    }
-
     if (NPT_FAILED(action->GetArgumentValue("ObjectID", (*info)->object_id)))  {
         goto bad_action;
     }
@@ -370,6 +367,11 @@ CMediaCrawler::OnBrowseResponse(NPT_Result               res,
     if (NPT_FAILED(action->GetArgumentValue("Result", (*info)->didl))) {
         goto bad_action;
     }
+    
+    if (NPT_FAILED((*info)->res) || action->GetErrorCode() != 0) {
+        goto bad_action;
+    }
+    
     goto done;
 
 bad_action:
@@ -493,8 +495,7 @@ CMediaCrawler::ProcessFileRequest(NPT_HttpRequest&              request,
 {
     NPT_COMPILER_UNUSED(context);
 
-    NPT_LOG_FINE("CMediaCrawler::ProcessFileRequest Received Request:");
-    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINER, &request);
+    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINE, "CMediaCrawler::ProcessFileRequest:", &request);
 
     if (request.GetMethod().Compare("GET", true) && request.GetMethod().Compare("HEAD", true)) {
         response.SetStatus(500, "Internal Server Error");

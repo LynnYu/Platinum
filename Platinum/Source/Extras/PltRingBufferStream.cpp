@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -57,8 +58,9 @@ PLT_RingBufferStream::PLT_RingBufferStream(NPT_Size buffer_size,
                                            bool     blocking /* = true */) : 
     m_TotalBytesRead(0),
     m_TotalBytesWritten(0),
+    m_Blocking(blocking),
     m_Eos(false),
-    m_Blocking(blocking)
+    m_Aborted(false)
 {
     m_RingBuffer = new NPT_RingBuffer(buffer_size);
 }
@@ -71,8 +73,9 @@ PLT_RingBufferStream::PLT_RingBufferStream(NPT_RingBufferReference& buffer,
     m_RingBuffer(buffer),
     m_TotalBytesRead(0),
     m_TotalBytesWritten(0),
+    m_Blocking(blocking),
     m_Eos(false),
-    m_Blocking(blocking)
+    m_Aborted(false)
 {
 }
 
@@ -89,50 +92,56 @@ PLT_RingBufferStream::~PLT_RingBufferStream()
 NPT_Result 
 PLT_RingBufferStream::Read(void*     buffer, 
                            NPT_Size  max_bytes_to_read, 
-                           NPT_Size* bytes_read /*= NULL*/)
+                           NPT_Size* _bytes_read /*= NULL*/)
 {
-    NPT_Size bytes_avail, to_read;
-    NPT_Size last_read = 0;
+    NPT_Size bytes_to_read;
+    NPT_Size bytes_read = 0;
 
     // reset output param first
-    if (bytes_read) *bytes_read = 0;
+    if (_bytes_read) *_bytes_read = 0;
 
     // wait for data
     do {
         {
             NPT_AutoLock autoLock(m_Lock);
-            if (m_RingBuffer->GetContiguousAvailable()) break;
-        }
+            
+            if (m_Aborted) {
+                return NPT_ERROR_INTERRUPTED;
+            }
+            
+            // check for data
+            if (m_RingBuffer->GetAvailable()) 
+                break;
 
-        if (m_Eos || m_RingBuffer->IsClosed()) {
-            return NPT_ERROR_EOS;
-        } else if (!m_Blocking) {
-            return NPT_ERROR_WOULD_BLOCK;
+            if (m_Eos) {
+                return NPT_ERROR_EOS;
+            } else if (!m_Blocking) {
+                return NPT_ERROR_WOULD_BLOCK;
+            }
         }
-
+        
         // sleep and try again
-        NPT_System::Sleep(NPT_TimeInterval(.01));
+        NPT_System::Sleep(NPT_TimeInterval(.1));
     } while (1);
 
     {
         NPT_AutoLock autoLock(m_Lock);
 
-        // try twice in case we looped
+        // try twice in case available data was not contiguous
         for (int i=0; i<2; i++) {
-            bytes_avail = m_RingBuffer->GetContiguousAvailable();
-            to_read = min(max_bytes_to_read - last_read, bytes_avail);
+            bytes_to_read = min(max_bytes_to_read - bytes_read, m_RingBuffer->GetContiguousAvailable());
 
-            // break if nothing to read
-            if (to_read == 0) break;
+            // break if nothing to read the second time
+            if (bytes_to_read == 0) break;
 
             // read into buffer and advance
-            NPT_CHECK(m_RingBuffer->Read((unsigned char*)buffer+last_read, to_read));
+            NPT_CHECK(m_RingBuffer->Read((unsigned char*)buffer+bytes_read, bytes_to_read));
 
             // keep track of the total bytes we have read so far
-            m_TotalBytesRead += to_read;
-            last_read += to_read;
+            m_TotalBytesRead += bytes_to_read;
+            bytes_read += bytes_to_read;
 
-            if (bytes_read) *bytes_read += to_read;
+            if (_bytes_read) *_bytes_read += bytes_to_read;
         }
     }
 
@@ -146,50 +155,58 @@ PLT_RingBufferStream::Read(void*     buffer,
 +---------------------------------------------------------------------*/
 NPT_Result 
 PLT_RingBufferStream::Write(const void* buffer, 
-                            NPT_Size    bytes_to_write, 
-                            NPT_Size*   bytes_written /*= NULL*/)
+                            NPT_Size    max_bytes_to_write, 
+                            NPT_Size*   _bytes_written /*= NULL*/)
 {
-    NPT_Size     space_avail, to_write;
-    NPT_Size     last_written = 0;
+    NPT_Size bytes_to_write;
+    NPT_Size bytes_written = 0;
 
     // reset output param first
-    if (bytes_written) *bytes_written = 0;
+    if (_bytes_written) *_bytes_written = 0;
 
     // wait for space
     do {
         {
             NPT_AutoLock autoLock(m_Lock);
-            if (m_RingBuffer->GetContiguousSpace()) break;
-        }
+            
+            if (m_Aborted) {
+                return NPT_ERROR_INTERRUPTED;
+            }
 
-        if (m_Eos || m_RingBuffer->IsClosed()) {
-            return NPT_ERROR_EOS;
-        } else if (!m_Blocking) {
-            return NPT_ERROR_WOULD_BLOCK;
+            // return immediately if we are told we're finished
+            if (m_Eos) {
+                return NPT_ERROR_EOS;
+            }
+
+            if (m_RingBuffer->GetSpace())
+                break;
+
+            if (!m_Blocking) {
+                return NPT_ERROR_WOULD_BLOCK;
+            }
         }
 
         // sleep and try again
-        NPT_System::Sleep(NPT_TimeInterval(.01));
+        NPT_System::Sleep(NPT_TimeInterval(.1));
     } while (1);
 
     {
         NPT_AutoLock autoLock(m_Lock);
 
-        // try twice in case we looped
+        // try twice in case available space was not contiguous
         for (int i=0; i<2; i++) {
-            space_avail = m_RingBuffer->GetContiguousSpace();
-            to_write = min(bytes_to_write - last_written, space_avail);
+            bytes_to_write = min(max_bytes_to_write - bytes_written, m_RingBuffer->GetContiguousSpace());
 
-            // break if no space to write
-            if (to_write == 0) break;
+            // break if no space to write the second time
+            if (bytes_to_write == 0) break;
 
             // write into buffer
-            NPT_CHECK(m_RingBuffer->Write((unsigned char*)buffer+last_written, to_write));
+            NPT_CHECK(m_RingBuffer->Write((unsigned char*)buffer+bytes_written, bytes_to_write));
 
-            m_TotalBytesWritten += to_write; 
-            last_written += to_write;
+            m_TotalBytesWritten += bytes_to_write; 
+            bytes_written += bytes_to_write;
 
-            if (bytes_written) *bytes_written += to_write;
+            if (_bytes_written) *_bytes_written += bytes_to_write;
         }
     }
 
@@ -210,4 +227,29 @@ PLT_RingBufferStream::Flush()
     m_TotalBytesRead = 0;
     m_TotalBytesWritten = 0;
     return NPT_SUCCESS;
+}
+
+/*----------------------------------------------------------------------
+|   PLT_RingBufferStream::SetEOS
++---------------------------------------------------------------------*/
+NPT_Result 
+PLT_RingBufferStream::SetEOS() 
+{ 
+    NPT_AutoLock autoLock(m_Lock); 
+    
+    m_Eos = true; 
+    return NPT_SUCCESS; 
+}
+
+
+/*----------------------------------------------------------------------
+ |   PLT_RingBufferStream::Abort
+ +---------------------------------------------------------------------*/
+NPT_Result 
+PLT_RingBufferStream::Abort() 
+{ 
+    NPT_AutoLock autoLock(m_Lock); 
+    
+    m_Aborted = true; 
+    return NPT_SUCCESS; 
 }

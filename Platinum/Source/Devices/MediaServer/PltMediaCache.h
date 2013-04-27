@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -98,9 +99,9 @@ template <typename T, typename U>
 inline
 NPT_Result
 PLT_MediaCache<T,U>::Put(const char* root,
-                       const char* key, 
-                       T&          value,
-                       U*          tag)
+                         const char* key, 
+                         T&          value,
+                         U*          tag)
 {
     NPT_AutoLock lock(m_Mutex);
 

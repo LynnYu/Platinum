@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -104,7 +105,8 @@ protected:
     virtual PLT_MediaObject* BuildFromFilePath(const NPT_String&             filepath, 
                                                const PLT_HttpRequestContext& context,
                                                bool                          with_count = true,
-                                               bool                          keep_extension_in_title = false);
+                                               bool                          keep_extension_in_title = false,
+                                               bool                          allip = false);
     
 protected:
     friend class PLT_MediaItem;

@@ -74,6 +74,14 @@ IEnumerable<System::String^>^ Platinum::ExtraInfo::Relations::get()
         );
 }
 
+IEnumerable<Platinum::AlbumArtInfo^>^ Platinum::ExtraInfo::AlbumArts::get()
+{
+    return gcnew Enumerables::EnumerableNptListRef<AlbumArtInfo^, PLT_AlbumArtInfo>(
+        m_pHandle->album_arts
+        );
+}
+
+
 Platinum::ProtocolInfo^ Platinum::ProtocolInfo::GetProtocolInfo(String^ filename, 
                                                                 bool with_dlna_extension, 
                                                                 HttpRequestContext^ context)

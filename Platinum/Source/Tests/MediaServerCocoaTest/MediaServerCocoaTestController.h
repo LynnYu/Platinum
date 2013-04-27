@@ -7,8 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "PltUPnPObject.h"
-#import "PltMediaServerObject.h"
+#import <Platinum/PltUPnPObject.h>
+#import <Platinum/PltMediaServerObject.h>
 
 @interface MediaServerCocoaTestController : NSObject <PLT_MediaServerDelegateObject> {
     IBOutlet NSWindow*	window;

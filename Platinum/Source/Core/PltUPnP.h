@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -44,12 +45,11 @@
 #include "PltTaskManager.h"
 #include "PltCtrlPoint.h"
 #include "PltDeviceHost.h"
-#include "PltUPnPHelper.h"
+#include "PltUtilities.h"
 
 /*----------------------------------------------------------------------
 |   constants
 +---------------------------------------------------------------------*/
-//#define PLT_DLNA_SSDP_DELAY 0.02f
 #define PLT_DLNA_SSDP_DELAY       0.05f
 #define PLT_DLNA_SSDP_DELAY_GROUP 0.2f
 
@@ -70,11 +70,8 @@ class PLT_UPnP
 public:
     /**
      Create a UPnP instance.
-     @param ssdp_port SSDP port to listen for incoming SSDP messages
-     @param multicast Boolean to use on some platforms that don't support multicast. Instead
-     it will use a simple broadcast method for SSDP announcements.
      */
-    PLT_UPnP(NPT_UInt32 ssdp_port = 1900, bool multicast = true);
+    PLT_UPnP();
     ~PLT_UPnP();
 
     /**
@@ -139,8 +136,6 @@ private:
     // we create it in here and we will attach every control points
     // and devices to it when they're added
     bool                                m_Started;
-    NPT_UInt32                          m_Port;
-    bool                                m_Multicast;
     PLT_SsdpListenTask*                 m_SsdpListenTask; 
 	bool								m_IgnoreLocalUUIDs;
 };

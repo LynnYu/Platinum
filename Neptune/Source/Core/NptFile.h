@@ -116,7 +116,7 @@ class NPT_FilePath
 {
 public:
     // class members
-    static const NPT_String Separator;
+    static const char* const Separator;
 
     // class methods
     static NPT_String BaseName(const char* path, bool with_extension = true);

@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -91,12 +92,7 @@ public:
                    NPT_UInt16   port = 0,
                    bool         port_rebind = false);
     virtual ~PLT_DeviceHost();
-
-    /**
-     When enabled, the device will use the interface broadcast address to
-     announce instead of the UPnP Multicast address 239.255.255.250.
-     @param broadcast boolean to indicate the use of broadcast address
-     */
+    
     virtual void SetBroadcast(bool broadcast) { m_Broadcast = broadcast; }
      
     /**
@@ -332,7 +328,6 @@ protected:
     friend class PLT_SsdpDeviceSearchResponseTask;
     friend class PLT_SsdpAnnounceInterfaceIterator;
 
-private:
     PLT_TaskManager m_TaskManager;
     PLT_HttpServer* m_HttpServer;
     bool            m_Broadcast;

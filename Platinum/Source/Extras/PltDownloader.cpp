@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -41,7 +42,7 @@
 |   PLT_Downloader::PLT_Downloader
 +---------------------------------------------------------------------*/
 PLT_Downloader::PLT_Downloader(PLT_TaskManager*           task_manager,
-                               const char*                url, 
+                               NPT_HttpUrl&               url, 
                                NPT_OutputStreamReference& output) :
     m_URL(url),
     m_Output(output),
@@ -67,7 +68,7 @@ PLT_Downloader::Start()
 {
     Stop();
 
-    m_Task = new PLT_HttpDownloadTask(NPT_HttpUrl(m_URL), this);
+    m_Task = new PLT_HttpDownloadTask(m_URL, this);
     NPT_Result res = m_TaskManager->StartTask(m_Task, NULL, false);
     if (NPT_FAILED(res)) {
         m_State = PLT_DOWNLOADER_ERROR;
@@ -114,8 +115,10 @@ PLT_Downloader::ProcessResponse(NPT_Result                    res,
 
     NPT_HttpEntity* entity;
     NPT_InputStreamReference body;
-    if (!response || !(entity = response->GetEntity()) || 
-        NPT_FAILED(entity->GetInputStream(body)) || body.IsNull()) {
+    if (!response || 
+        !(entity = response->GetEntity()) || 
+        NPT_FAILED(entity->GetInputStream(body)) || 
+        body.IsNull()) {
         m_State = PLT_DOWNLOADER_ERROR;
         return NPT_FAILURE;
     }

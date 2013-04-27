@@ -58,4 +58,6 @@ protected:
     NPT_System() {}
 };
 
+NPT_Result NPT_GetSystemMachineName(NPT_String& name);
+
 #endif // _NPT_SYSTEM_H_

@@ -20,9 +20,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleTest", "SimpleTest\Si
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FrameStreamer", "FrameStreamer\FrameStreamer.vcxproj", "{6C33AA12-1309-4FCA-BCE8-C3A9520AA9BF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Neptune", "..\..\..\..\Neptune\Build\Targets\x86-microsoft-win32-vs2008\Neptune\Neptune.vcxproj", "{12AFF2E5-6D95-4809-9728-9551677C078A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Neptune", "..\..\..\..\Neptune\Build\Targets\x86-microsoft-win32-vs2010\Neptune\Neptune.vcxproj", "{12AFF2E5-6D95-4809-9728-9551677C078A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TimeTest", "TimeTest\TimeTest.vcxproj", "{94EC393E-7CD5-4969-B7B3-829C9A3A4D57}"
+	ProjectSection(ProjectDependencies) = postProject
+		{568611D3-AFA7-4294-99C1-E9AED0D8057E} = {568611D3-AFA7-4294-99C1-E9AED0D8057E}
+		{12AFF2E5-6D95-4809-9728-9551677C078A} = {12AFF2E5-6D95-4809-9728-9551677C078A}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

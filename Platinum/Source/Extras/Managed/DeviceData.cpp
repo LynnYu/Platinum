@@ -69,7 +69,7 @@ Platinum::DeviceData^ Platinum::DeviceData::FindEmbeddedDeviceByType( String^ ty
 	if (r.IsNull())
 		return nullptr;
 
-	return marshal_as<DeviceData^>(*r);
+	return marshal_as<DeviceData^>(r);
 }
 
 Platinum::Service^ Platinum::DeviceData::FindServiceById( String^ id )

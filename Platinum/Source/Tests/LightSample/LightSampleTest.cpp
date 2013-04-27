@@ -17,6 +17,7 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
+| licensing@plutinosoft.com
 | 
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -37,7 +38,7 @@
 #include "PltUPnP.h"
 #include "PltLightSample.h"
 
-//#define TEST_EMBEDDED_DEVICE 1
+#define TEST_EMBEDDED_DEVICE 1
 
 /*----------------------------------------------------------------------
 |   main
@@ -51,10 +52,10 @@ main(int /* argc */, char** /* argv */)
 
 #ifdef TEST_EMBEDDED_DEVICE
     PLT_DeviceDataReference device2(new PLT_LightSampleDevice("Platinum Light Bulb embed 1"));
-    device->AddDevice((PLT_DeviceDataReference&)device2);
+    device->AddEmbeddedDevice((PLT_DeviceDataReference&)device2);
     
     PLT_DeviceDataReference device3(new PLT_LightSampleDevice("Platinum Light Bulb embed 2"));
-    device->AddDevice(device3);
+    device->AddEmbeddedDevice(device3);
 #endif
 
     upnp.AddDevice(device);

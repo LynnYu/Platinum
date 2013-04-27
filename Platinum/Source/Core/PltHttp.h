@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -42,16 +43,31 @@
 |   includes
 +---------------------------------------------------------------------*/
 #include "Neptune.h"
+#include "PltVersion.h"
 
+/*----------------------------------------------------------------------
+|   constants
++---------------------------------------------------------------------*/
+#if !defined(PLT_HTTP_DEFAULT_USER_AGENT)
+#define PLT_HTTP_DEFAULT_USER_AGENT "UPnP/1.0 DLNADOC/1.50 Platinum/" PLT_PLATINUM_SDK_VERSION_STRING
+#endif
+
+#if !defined(PLT_HTTP_DEFAULT_SERVER)
+#define PLT_HTTP_DEFAULT_SERVER "UPnP/1.0 DLNADOC/1.50 Platinum/" PLT_PLATINUM_SDK_VERSION_STRING
+#endif
 
 /*----------------------------------------------------------------------
 |   types
 +---------------------------------------------------------------------*/
 typedef enum {
-	PLT_UNKNOWN_DEVICE,
-	PLT_XBOX,
-	PLT_PS3,
-	PLT_WMP
+	PLT_DEVICE_UNKNOWN,
+	PLT_DEVICE_XBOX,
+	PLT_DEVICE_PS3,
+	PLT_DEVICE_WMP,
+    PLT_DEVICE_SONOS,
+    PLT_DEVICE_MAC,
+    PLT_DEVICE_WINDOWS,
+    PLT_DEVICE_VLC
 } PLT_DeviceSignature;
 
 /*----------------------------------------------------------------------
@@ -66,22 +82,17 @@ public:
     static bool         IsConnectionKeepAlive(NPT_HttpMessage& message);
     static bool         IsBodyStreamSeekable(NPT_HttpMessage& message);
 
-    static NPT_Result   ToLog(NPT_LoggerReference logger, int level, NPT_HttpRequest* request);
-    static NPT_Result   ToLog(NPT_LoggerReference logger, int level, const NPT_HttpRequest& request);
-    static NPT_Result   ToLog(NPT_LoggerReference logger, int level, NPT_HttpResponse* response);
-    static NPT_Result   ToLog(NPT_LoggerReference logger, int level, const NPT_HttpResponse& response);
+    static NPT_Result   ToLog(NPT_LoggerReference logger, int level, const char* prefix, NPT_HttpRequest* request);
+    static NPT_Result   ToLog(NPT_LoggerReference logger, int level, const char* prefix, const NPT_HttpRequest& request);
+    static NPT_Result   ToLog(NPT_LoggerReference logger, int level, const char* prefix, NPT_HttpResponse* response);
+    static NPT_Result   ToLog(NPT_LoggerReference logger, int level, const char* prefix, const NPT_HttpResponse& response);
 
     static NPT_Result   GetContentType(const NPT_HttpMessage& message, NPT_String& type);
     static NPT_Result   GetContentLength(const NPT_HttpMessage& message, NPT_LargeSize& len);
 
     static NPT_Result   GetHost(const NPT_HttpRequest& request, NPT_String& value);
     static void         SetHost(NPT_HttpRequest& request, const char* host);
-    static NPT_Result   GetRange(const NPT_HttpRequest& request, NPT_Position& start, NPT_Position& end);
-    static void         SetRange(NPT_HttpRequest& request, NPT_Position start, NPT_Position end = (NPT_Position)-1);
 	static PLT_DeviceSignature GetDeviceSignature(const NPT_HttpRequest& request);
-
-    static NPT_Result   GetContentRange(const NPT_HttpResponse& response, NPT_Position& start, NPT_Position& end, NPT_LargeSize& length);
-    static NPT_Result   SetContentRange(NPT_HttpResponse& response, NPT_Position start, NPT_Position end, NPT_LargeSize length);
 
     static NPT_Result   SetBody(NPT_HttpMessage& message, NPT_String& text, NPT_HttpEntity** entity = NULL);
     static NPT_Result   SetBody(NPT_HttpMessage& message, const char* text, NPT_HttpEntity** entity = NULL);
@@ -90,9 +101,6 @@ public:
     static NPT_Result   GetBody(const NPT_HttpMessage& message, NPT_String& body);
     static NPT_Result   ParseBody(const NPT_HttpMessage& message, NPT_XmlElementNode*& xml);
 
-    static NPT_Result   Connect(NPT_Socket&      connection,
-                                NPT_HttpRequest& request,
-                                NPT_Timeout      timeout = NPT_TIMEOUT_INFINITE);
 	static void			SetBasicAuthorization(NPT_HttpRequest& request, const char* username, const char* password);
 };
 
@@ -100,8 +108,8 @@ public:
 |   PLT_HttpRequestContext
 +---------------------------------------------------------------------*/
 /** 
- The PLT_HttpRequestContext class holds information about the request sent and the
- local and remote ip address and port associated with a connection. It is used
+ The PLT_HttpRequestContext class holds information about the request sent, the
+ local & remote ip addresses and ports associated with a connection. It is used
  mostly when processing a HTTP response.
  */
 class PLT_HttpRequestContext : public NPT_HttpRequestContext {
@@ -125,14 +133,14 @@ private:
 |   macros
 +---------------------------------------------------------------------*/
 #if defined(NPT_CONFIG_ENABLE_LOGGING)
-#define PLT_LOG_HTTP_MESSAGE_L(_logger, _level, _msg) \
-    PLT_HttpHelper::ToLog((_logger), (_level), (_msg))
-#define PLT_LOG_HTTP_MESSAGE(_level, _msg) \
-	PLT_HttpHelper::ToLog((_NPT_LocalLogger), (_level), (_msg))
+#define PLT_LOG_HTTP_MESSAGE_L(_logger, _level, _prefix, _msg) \
+    PLT_HttpHelper::ToLog((_logger), (_level), (_prefix), (_msg))
+#define PLT_LOG_HTTP_MESSAGE(_level, _prefix, _msg) \
+	PLT_HttpHelper::ToLog((_NPT_LocalLogger), (_level), (_prefix), (_msg))
 
 #else /* NPT_CONFIG_ENABLE_LOGGING */
-#define PLT_LOG_HTTP_MESSAGE_L(_logger, _level, _msg)
-#define PLT_LOG_HTTP_MESSAGE(_level, _msg)
+#define PLT_LOG_HTTP_MESSAGE_L(_logger, _level, _prefix, _msg)
+#define PLT_LOG_HTTP_MESSAGE(_level, _prefix, _msg)
 #endif /* NPT_CONFIG_ENABLE_LOGGING */
 
 /*----------------------------------------------------------------------

@@ -23,5 +23,4 @@ void
 NPT_Console::Output(const char* message)
 {
     __android_log_write(ANDROID_LOG_DEBUG, "Neptune", message);
-    printf("%s", message);
 }

@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -83,7 +84,6 @@ protected:
     NPT_Result Start(PLT_TaskManager*  task_manager = NULL, 
                      NPT_TimeInterval* delay = NULL,
                      bool              auto_destroy = true);
-    
     /**
      Stop the task. This is either called by a task manager or the Kill method.
      @param blocking Whether the method should block until the task has finished.
@@ -118,7 +118,9 @@ protected:
      */
     virtual ~PLT_ThreadTask();
     
-private:
+private:    
+    NPT_Result StartThread();
+    
     // NPT_Thread methods
     void Run();
 
@@ -128,6 +130,7 @@ protected:
 
 private:
     // members
+    NPT_SharedVariable  m_Started;
     NPT_SharedVariable  m_Abort;
     NPT_Thread*         m_Thread;
     bool                m_AutoDestroy;

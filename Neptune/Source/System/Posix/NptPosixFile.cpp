@@ -73,7 +73,7 @@ MapErrno(int err) {
 /*----------------------------------------------------------------------
 |   NPT_FilePath::Separator
 +---------------------------------------------------------------------*/
-const NPT_String NPT_FilePath::Separator("/");
+const char* const NPT_FilePath::Separator = "/";
 
 /*----------------------------------------------------------------------
 |   NPT_File::GetRoots
@@ -233,7 +233,7 @@ NPT_File::GetInfo(const char* path, NPT_FileInfo* info)
 #else
 #define _path path
 #endif
-    
+
     // get the file info
     NPT_stat_struct stat_buffer;
     int result = NPT_stat(_path, &stat_buffer);
@@ -252,7 +252,7 @@ NPT_File::GetInfo(const char* path, NPT_FileInfo* info)
         info->m_AttributesMask &= NPT_FILE_ATTRIBUTE_READ_ONLY;
         if ((stat_buffer.st_mode & S_IWUSR) == 0) {
             info->m_Attributes &= NPT_FILE_ATTRIBUTE_READ_ONLY;
-        }        
+        }
 #if defined(NPT_CONFIG_HAVE_STAT_ST_BIRTHTIME)
         info->m_CreationTime.SetSeconds(stat_buffer.st_birthtime);
 #elif defined(NPT_CONFIG_STAT_ST_CTIME_IS_ST_BIRTHTIME)
@@ -262,6 +262,6 @@ NPT_File::GetInfo(const char* path, NPT_FileInfo* info)
 #endif
         info->m_ModificationTime.SetSeconds(stat_buffer.st_mtime);
     }
-
+    
     return NPT_SUCCESS;
 }

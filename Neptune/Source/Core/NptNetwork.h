@@ -91,10 +91,13 @@ public:
     const unsigned char* AsBytes() const;
     unsigned long    AsLong() const;
     NPT_String       ToString() const;
-
+    
     // operators
     bool             operator==(const NPT_IpAddress& other) const;
     
+    // FIXME: temporary
+    NPT_String       m_HostName;
+
 private:
     // members
     unsigned char m_Address[4];
@@ -232,5 +235,16 @@ private:
     NPT_List<NPT_NetworkInterfaceAddress> m_Addresses;
 };
 
+/*----------------------------------------------------------------------
+|   NPT_NetworkNameResolver
++---------------------------------------------------------------------*/
+class NPT_NetworkNameResolver
+{
+public:
+    // class methods
+    static NPT_Result Resolve(const char*              name, 
+                              NPT_List<NPT_IpAddress>& addresses,
+                              NPT_Timeout              timeout = NPT_TIMEOUT_INFINITE);
+};
 
 #endif // _NPT_NETWORK_H_

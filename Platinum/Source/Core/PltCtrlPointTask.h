@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -62,9 +63,10 @@ class PLT_Action;
 class PLT_CtrlPointGetDescriptionTask : public PLT_HttpClientSocketTask
 {
 public:
-    PLT_CtrlPointGetDescriptionTask(const NPT_HttpUrl&       url,
-                                    PLT_CtrlPoint*           ctrl_point,
-                                    PLT_DeviceDataReference& root_device);
+    PLT_CtrlPointGetDescriptionTask(const NPT_HttpUrl& url,
+                                    PLT_CtrlPoint*     ctrl_point,
+                                    NPT_TimeInterval   leasetime,
+                                    NPT_String         uuid);
     virtual ~PLT_CtrlPointGetDescriptionTask();
 
 protected:
@@ -75,15 +77,16 @@ protected:
                                NPT_HttpResponse*             response);
 
 protected:
-    PLT_CtrlPoint*          m_CtrlPoint;
-    PLT_DeviceDataReference m_RootDevice;
+    PLT_CtrlPoint*   m_CtrlPoint;
+    NPT_TimeInterval m_LeaseTime;
+    NPT_String       m_UUID;
 };
 
 /*----------------------------------------------------------------------
 |   PLT_CtrlPointGetSCPDRequest class
 +---------------------------------------------------------------------*/
 /**
- The PLT_CtrlPointGetSCPDRequest class is used by a PLT_CtrlPointGetSCPDTask task
+ The PLT_CtrlPointGetSCPDRequest class is used by a PLT_CtrlPointGetSCPDsTask task
  to fetch a specific SCPD xml document for a given service of a given device.
  */
 class PLT_CtrlPointGetSCPDRequest : public NPT_HttpRequest
@@ -101,17 +104,17 @@ public:
 };
 
 /*----------------------------------------------------------------------
-|   PLT_CtrlPointGetSCPDTask class
+|   PLT_CtrlPointGetSCPDsTask class
 +---------------------------------------------------------------------*/
 /**
- The PLT_CtrlPointGetSCPDTask class fetches the SCPD xml document of one or more
+ The PLT_CtrlPointGetSCPDsTask class fetches the SCPD xml document of one or more
  services for a given device. 
  */
-class PLT_CtrlPointGetSCPDTask : public PLT_HttpClientSocketTask
+class PLT_CtrlPointGetSCPDsTask : public PLT_HttpClientSocketTask
 {
 public:
-    PLT_CtrlPointGetSCPDTask(PLT_CtrlPoint* ctrl_point);
-    virtual ~PLT_CtrlPointGetSCPDTask();
+    PLT_CtrlPointGetSCPDsTask(PLT_CtrlPoint* ctrl_point, PLT_DeviceDataReference& root_device);
+    virtual ~PLT_CtrlPointGetSCPDsTask();
 
     NPT_Result AddSCPDRequest(PLT_CtrlPointGetSCPDRequest* request) {
         return PLT_HttpClientSocketTask::AddRequest((NPT_HttpRequest*)request);
@@ -131,7 +134,8 @@ protected:
                                NPT_HttpResponse*             response);   
 
 protected:
-    PLT_CtrlPoint* m_CtrlPoint;
+    PLT_CtrlPoint*          m_CtrlPoint;
+    PLT_DeviceDataReference m_RootDevice;
 };
 
 /*----------------------------------------------------------------------

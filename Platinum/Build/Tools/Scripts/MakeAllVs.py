@@ -7,7 +7,7 @@ import subprocess
 
 
 configs = ['Debug', 'Release']
-solutions = ['Tunnel/Tunnel.sln']
+solutions = ['../../../Build/Targets/x86-microsoft-win32-vs2008/Platinum.sln']
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "b:rc")

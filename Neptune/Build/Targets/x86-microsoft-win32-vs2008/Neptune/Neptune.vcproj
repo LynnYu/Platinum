@@ -172,6 +172,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\Source\System\Bsd\NptBsdResolver.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\Source\System\Bsd\NptBsdSockets.cpp"
 				>
 			</File>
@@ -197,6 +201,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\Source\Core\NptFile.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\Source\Core\NptHash.cpp"
 				>
 			</File>
 			<File
@@ -379,6 +387,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\Source\Core\NptFile.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\Source\Core\NptHash.h"
 				>
 			</File>
 			<File

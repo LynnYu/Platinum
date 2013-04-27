@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -65,7 +66,7 @@ class PLT_Downloader
 {
 public:
     PLT_Downloader(PLT_TaskManager*           task_manager, 
-                   const char*                url, 
+                   NPT_HttpUrl&               url, 
                    NPT_OutputStreamReference& output);
     virtual ~PLT_Downloader();
 
@@ -82,7 +83,7 @@ public:
 
 private:
     // members
-    NPT_String                m_URL;
+    NPT_HttpUrl               m_URL;
     NPT_OutputStreamReference m_Output;
     PLT_TaskManager*          m_TaskManager;
     PLT_HttpDownloadTask*     m_Task;

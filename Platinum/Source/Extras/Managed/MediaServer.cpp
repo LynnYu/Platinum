@@ -41,7 +41,7 @@
 #include "MediaServerEventBridge.h"
 
 Platinum::MediaServer::MediaServer(PLT_MediaServer* server) : 
-    DeviceHost(*server)
+    DeviceHost(*(server))
 {
     RegisterEvents();
 }
@@ -90,6 +90,7 @@ void Platinum::MediaServer::UpdateContainerUpdateID(String^ id, Int32 update)
 Int32 Platinum::MediaServer::SetResponseFilePath(HttpRequestContext^ context, HttpResponse^ response, String^ filepath)
 {
     NPT_CHECK_WARNING(PLT_HttpServer::ServeFile(context->Request->Handle, 
+                                                context->Handle,
                                                 response->Handle, 
                                                 NPT_String(StringConv(filepath))));
 

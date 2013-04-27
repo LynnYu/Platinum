@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -76,10 +77,7 @@ PLT_FileMediaServerDelegate::ProcessFileRequest(NPT_HttpRequest&              re
 {
     NPT_HttpUrlQuery query(request.GetUrl().GetQuery());
     
-    NPT_LOG_FINE("PLT_FileMediaServerDelegate::ProcessFileRequest Received Request:");
-    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINER, &request);
-    
-    response.GetHeaders().SetHeader("Accept-Ranges", "bytes");
+    PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINE, "PLT_FileMediaServerDelegate::ProcessFileRequest:", &request);
     
     if (request.GetMethod().Compare("GET") && request.GetMethod().Compare("HEAD")) {
         response.SetStatus(500, "Internal Server Error");
@@ -108,12 +106,7 @@ PLT_FileMediaServerDelegate::ServeFile(const NPT_HttpRequest&        request,
                                        NPT_HttpResponse&             response,
                                        const NPT_String&             file_path)
 {
-    NPT_CHECK_WARNING(PLT_HttpServer::ServeFile(request, response, file_path));
-    
-    /* Update content type header according to file and context */
-    NPT_HttpEntity* entity = response.GetEntity();
-    PLT_HttpRequestContext tmp_context(request, context);
-    if (entity) entity->SetContentType(PLT_MimeType::GetMimeType(file_path, &tmp_context));
+    NPT_CHECK_WARNING(PLT_HttpServer::ServeFile(request, context, response, file_path));
     return NPT_SUCCESS;
 }
 
@@ -146,7 +139,7 @@ PLT_FileMediaServerDelegate::OnBrowseMetadata(PLT_ActionReference&          acti
     }
     
     /* build the object didl */
-    item = BuildFromFilePath(filepath, context, true);
+    item = BuildFromFilePath(filepath, context, true, false, (NPT_String(filter).Find("ALLIP")!=-1));
     if (item.IsNull()) return NPT_FAILURE;
     NPT_String tmp;    
     NPT_CHECK_SEVERE(PLT_Didl::ToDidl(*item.AsPointer(), filter, tmp));
@@ -158,8 +151,8 @@ PLT_FileMediaServerDelegate::OnBrowseMetadata(PLT_ActionReference&          acti
     NPT_CHECK_SEVERE(action->SetArgumentValue("NumberReturned", "1"));
     NPT_CHECK_SEVERE(action->SetArgumentValue("TotalMatches", "1"));
     
-    // update ID may be wrong here, it should be the one of the container?
-    // TODO: We need to keep track of the overall updateID of the CDS
+    /* update ID may be wrong here, it should be the one of the container?
+       TODO: We need to keep track of the overall updateID of the CDS */
     NPT_CHECK_SEVERE(action->SetArgumentValue("UpdateId", "1"));
     
     return NPT_SUCCESS;
@@ -181,40 +174,27 @@ PLT_FileMediaServerDelegate::OnBrowseDirectChildren(PLT_ActionReference&        
     
     /* locate the file from the object ID */
     NPT_String dir;
-    if (NPT_FAILED(GetFilePath(object_id, dir))) {
-        /* error */
-        NPT_LOG_WARNING("ObjectID not found.");
-        action->SetError(710, "No Such Container.");
-        NPT_CHECK_WARNING(NPT_FAILURE);
-    }
-    
-    /* retrieve the item type */
     NPT_FileInfo info;
-    NPT_Result res = NPT_File::GetInfo(dir, &info);
-    if (NPT_FAILED(res)) {
-        /* Object does not exist */
-        NPT_LOG_WARNING_1("BROWSEDIRECTCHILDREN failed for item %s", dir.GetChars());
+    if (NPT_FAILED(GetFilePath(object_id, dir)) || 
+        NPT_FAILED(NPT_File::GetInfo(dir, &info)) ||
+        info.m_Type != NPT_FileInfo::FILE_TYPE_DIRECTORY) {
+        /* error */
+        NPT_LOG_WARNING_1("ObjectID \'%s\' not found or not allowed", object_id);
         action->SetError(701, "No such Object");
         NPT_CHECK_WARNING(NPT_FAILURE);
     }
     
-    if (info.m_Type != NPT_FileInfo::FILE_TYPE_DIRECTORY) {
-        /* error */
-        NPT_LOG_WARNING("BROWSEDIRECTCHILDREN not allowed on an item.");
-        action->SetError(710, "No such container");
-        NPT_CHECK_WARNING(NPT_FAILURE);
-    }
-    
-    // get uuid from device via action reference
+    /* get uuid from device via action reference */
     NPT_String uuid = action->GetActionDesc().GetService()->GetDevice()->GetUUID();
     
-    // Try to get list from cache
+    /* Try to get list from cache */
+    NPT_Result res;
     NPT_Reference<NPT_List<NPT_String> > entries;
     NPT_TimeStamp cached_entries_time;
     if (NPT_FAILED(m_DirCache.Get(uuid, dir, entries, &cached_entries_time)) ||
         cached_entries_time < info.m_ModificationTime) {
-        // if not found in cache or if current dir has newer modified time
-        // fetch fresh new list from source
+        /* if not found in cache or if current dir has newer modified time
+           fetch fresh new list from source */
         
         entries = new NPT_List<NPT_String>();
         res = NPT_File::ListDir(dir, *entries);
@@ -223,14 +203,14 @@ PLT_FileMediaServerDelegate::OnBrowseDirectChildren(PLT_ActionReference&        
             NPT_CHECK_WARNING(res);
         }
         
-        // sort results according to modification date
+        /* sort results according to modification date */
         res = entries->Sort(NPT_FileDateComparator(dir));
         if (NPT_FAILED(res)) {
             NPT_LOG_WARNING_1("PLT_FileMediaServerDelegate::OnBrowseDirectChildren - failed to open sort dir %s", (const char*) dir);
             NPT_CHECK_WARNING(res);
         }
         
-        // add new list to cache
+        /* add new list to cache */
         m_DirCache.Put(uuid, dir, entries, &info.m_ModificationTime);
     }
     
@@ -238,6 +218,7 @@ PLT_FileMediaServerDelegate::OnBrowseDirectChildren(PLT_ActionReference&        
     unsigned long num_returned = 0;
     unsigned long total_matches = 0;
     NPT_String didl = didl_header;
+    bool allip = (NPT_String(filter).Find("ALLIP") != -1);
     
     PLT_MediaObjectReference item;
     for (NPT_List<NPT_String>::Iterator it = entries->GetFirstItem();
@@ -245,13 +226,15 @@ PLT_FileMediaServerDelegate::OnBrowseDirectChildren(PLT_ActionReference&        
          ++it) {
         NPT_String filepath = NPT_FilePath::Create(dir, *it);
         
-        // verify we want to process this file first
+        /* verify we want to process this file first */
         if (!ProcessFile(filepath, filter)) continue;
         
         /* build item object from file path */
         item = BuildFromFilePath(filepath, 
                                  context,
-                                 true);
+                                 true,
+                                 false,
+                                 allip);
         
         /* generate didl if within range requested */
         if (!item.IsNull()) {
@@ -270,7 +253,7 @@ PLT_FileMediaServerDelegate::OnBrowseDirectChildren(PLT_ActionReference&        
     
     didl += didl_footer;
     
-    NPT_LOG_INFO_6("BrowseDirectChildren from %s returning %d-%d/%d objects (%d out of %d requested)",
+    NPT_LOG_FINE_6("BrowseDirectChildren from %s returning %d-%d/%d objects (%d out of %d requested)",
                    (const char*)context.GetLocalAddress().GetIpAddress().ToString(),
                    starting_index, starting_index+num_returned, total_matches, num_returned, requested_count);
     
@@ -338,7 +321,7 @@ PLT_FileMediaServerDelegate::GetFilePath(const char* object_id,
     
     filepath = m_FileRoot;
     
-    // object id is formatted as 0/<filepath>
+    /* object id is formatted as 0/<filepath> */
     if (NPT_StringLength(object_id) >= 1) {
         filepath += (object_id + (object_id[0]=='0'?1:0));
     }
@@ -362,16 +345,16 @@ PLT_FileMediaServerDelegate::BuildSafeResourceUri(const NPT_HttpUrl& base_uri,
     NPT_String uri_path = uri.GetPath();
     if (!uri_path.EndsWith("/")) uri_path += "/";
 
-	// some controllers (like WMP) will call us with an already urldecoded version.
-    // We're intentionally prepending a known urlencoded string
-    // to detect it when we receive the request
-    uri_path += "%25/";
-    uri_path += NPT_Uri::PercentEncode(file_path, " !\"<>\\^`{|}?#[]:/", true);
-
-    // set path but don't urlencode it again
-    uri.SetPath(uri_path, true);
+	/* some controllers (like WMP) will call us with an already urldecoded version.
+       We're intentionally prepending a known urlencoded string
+       to detect it when we receive the request urlencoded or already decoded to avoid double decoding*/
+    uri_path += "%/";
+    uri_path += file_path;
     
-    // 360 hack: force inclusion of port in case it's 80
+    /* set path */
+    uri.SetPath(uri_path);
+    
+    /* 360 hack: force inclusion of port in case it's 80 */
     return uri.ToStringWithDefaultPort(0);
 }
 
@@ -382,26 +365,36 @@ NPT_Result
 PLT_FileMediaServerDelegate::ExtractResourcePath(const NPT_HttpUrl& url, 
                                                  NPT_String&        file_path)
 {
-    // Extract uri path from url
+    /* Extract non decoded path, we need to autodetect urlencoding */
     NPT_String uri_path = url.GetPath();
-    if (uri_path.StartsWith(m_UrlRoot, true)) {
-        file_path = uri_path.SubString(m_UrlRoot.GetLength()+m_UrlRoot.EndsWith("/")?1:0);
-        
-        if (file_path.StartsWith("%/")) {
-            NPT_LOG_FINE("Received a urldecoded version of our url!");
-            file_path.Erase(0, 2);
-        } else {
-            // remove our prepended string we used to detect urldecoded version
-            if (file_path.StartsWith("%25/")) file_path.Erase(0, 4);
-
-            // ok to urldecode
-            file_path = NPT_Uri::PercentDecode(file_path);
-        }
-        
-        return NPT_SUCCESS;
+    NPT_String url_root_encode = NPT_Uri::PercentEncode(m_UrlRoot, NPT_Uri::PathCharsToEncode);
+    
+    NPT_Ordinal skip = 0;
+    if (uri_path.StartsWith(m_UrlRoot)) {
+        skip = m_UrlRoot.GetLength();
+    } else if (uri_path.StartsWith(url_root_encode)) {
+        skip = url_root_encode.GetLength();
+    } else {
+        return NPT_FAILURE;
     }
     
-    return NPT_FAILURE;
+    /* account for extra slash */
+    skip += ((m_UrlRoot=="/")?0:1);
+    file_path = uri_path.SubString(skip);
+    
+    /* detect if client such as WMP sent a non urlencoded url */
+    if (file_path.StartsWith("%/")) {
+        NPT_LOG_FINE("Received a urldecoded version of our url!");
+        file_path.Erase(0, 2);
+    } else {
+        /* remove our prepended string we used to detect urldecoded version */
+        if (file_path.StartsWith("%25/")) file_path.Erase(0, 4);
+
+        /* ok to urldecode */
+        file_path = NPT_Uri::PercentDecode(file_path);
+    }
+    
+    return NPT_SUCCESS;
 }
 
 /*----------------------------------------------------------------------
@@ -422,7 +415,8 @@ PLT_MediaObject*
 PLT_FileMediaServerDelegate::BuildFromFilePath(const NPT_String&             filepath, 
                                                const PLT_HttpRequestContext& context,
                                                bool                          with_count /* = true */,
-                                               bool                          keep_extension_in_title /* = false */)
+                                               bool                          keep_extension_in_title /* = false */,
+                                               bool                          allip /* = false */)
 {
     NPT_String            root = m_FileRoot;
     PLT_MediaItemResource resource;
@@ -467,16 +461,21 @@ PLT_FileMediaServerDelegate::BuildFromFilePath(const NPT_String&             fil
         if (context.GetLocalAddress().GetIpAddress().ToString() != "0.0.0.0") {
             ips.Remove(context.GetLocalAddress().GetIpAddress());
             ips.Insert(ips.GetFirstItem(), context.GetLocalAddress().GetIpAddress());
+        } else if (!allip) {
+            NPT_LOG_WARNING("Couldn't determine local interface IP so we might return an unreachable IP");
         }
         object->m_ObjectClass.type = PLT_MediaItem::GetUPnPClass(filepath, &context);
         
         /* add as many resources as we have interfaces s*/
-        NPT_HttpUrl base_uri("127.0.0.1", context.GetLocalAddress().GetPort(), m_UrlRoot);
+        NPT_HttpUrl base_uri("127.0.0.1", context.GetLocalAddress().GetPort(), NPT_HttpUrl::PercentEncode(m_UrlRoot, NPT_Uri::PathCharsToEncode));
         NPT_List<NPT_IpAddress>::Iterator ip = ips.GetFirstItem();        
         while (ip) {
             resource.m_Uri = BuildResourceUri(base_uri, ip->ToString(), url);
             object->m_Resources.Add(resource);
             ++ip;
+            
+            /* if we only want the one resource reachable by client */
+            if (!allip) break;
         }
     } else {
         object = new PLT_MediaContainer;

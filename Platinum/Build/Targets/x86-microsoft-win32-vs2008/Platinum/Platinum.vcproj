@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\..\Neptune\Source\Core;..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect"
+				AdditionalIncludeDirectories="..\..\..\..\..\Neptune\Source\Core;..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Extras;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;NPT_CONFIG_ENABLE_LOGGING;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -107,7 +107,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\..\..\Neptune\Source\Core;..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect"
+				AdditionalIncludeDirectories="..\..\..\..\..\Neptune\Source\Core;..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Extras;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;NPT_CONFIG_ENABLE_LOGGING;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -213,6 +213,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\..\Source\Core\PltMimeType.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\..\Source\Core\PltProtocolInfo.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\..\Source\Core\PltService.cpp"
 					>
 				</File>
@@ -274,14 +282,6 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\Source\Devices\MediaServer\PltMediaServer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\Source\Devices\MediaServer\PltMimeType.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\Source\Devices\MediaServer\PltProtocolInfo.cpp"
 					>
 				</File>
 				<File
@@ -499,11 +499,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\Source\Devices\MediaServer\PltMimeType.h"
+					RelativePath="..\..\..\..\Source\Core\PltMimeType.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\Source\Devices\MediaServer\PltProtocolInfo.h"
+					RelativePath="..\..\..\..\Source\Core\PltProtocolInfo.h"
 					>
 				</File>
 				<File
@@ -578,6 +578,10 @@
 			UniqueIdentifier="{D679E99D-9E2C-4288-A353-B64B3A54D93F}"
 			>
 		</Filter>
+		<File
+			RelativePath=".\ClassDiagram1.cd"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

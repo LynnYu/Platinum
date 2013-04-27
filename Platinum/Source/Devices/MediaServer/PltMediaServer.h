@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -131,9 +132,6 @@ protected:
     virtual NPT_Result SetupServices();
     virtual NPT_Result OnAction(PLT_ActionReference&          action, 
                                 const PLT_HttpRequestContext& context);
-    virtual NPT_Result ProcessGetDescription(NPT_HttpRequest&              request,
-                                             const NPT_HttpRequestContext& context,
-                                             NPT_HttpResponse&             response);
     virtual NPT_Result ProcessHttpGetRequest(NPT_HttpRequest&              request, 
                                              const NPT_HttpRequestContext& context,
                                              NPT_HttpResponse&             response);
@@ -184,7 +182,6 @@ protected:
     
 private:
     PLT_MediaServerDelegate* m_Delegate;
-    //NPT_Map<NPT_String, NPT_UInt32> 
 };
 
 #endif /* _PLT_MEDIA_SERVER_H_ */

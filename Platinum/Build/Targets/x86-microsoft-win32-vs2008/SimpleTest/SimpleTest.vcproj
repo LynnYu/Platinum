@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\..\Neptune\Source\Core"
+				AdditionalIncludeDirectories="..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Extras;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect;..\..\..\..\..\Neptune\Source\Core"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;NPT_CONFIG_ENABLE_LOGGING;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -116,7 +116,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\..\Neptune\Source\Core"
+				AdditionalIncludeDirectories="..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Extras;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect;..\..\..\..\..\Neptune\Source\Core"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NPT_CONFIG_ENABLE_LOGGING;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"

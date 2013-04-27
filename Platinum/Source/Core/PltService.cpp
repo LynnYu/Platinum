@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -38,7 +39,7 @@
 #include "PltSsdp.h"
 #include "PltUPnP.h"
 #include "PltDeviceData.h"
-#include "PltXmlHelper.h"
+#include "PltUtilities.h"
 
 NPT_SET_LOCAL_LOGGER("platinum.core.service")
 
@@ -77,7 +78,6 @@ PLT_Service::~PLT_Service()
  {
      m_ActionDescs.Apply(NPT_ObjectDeleter<PLT_ActionDesc>());
      m_StateVars.Apply(NPT_ObjectDeleter<PLT_StateVariable>());
-     m_Subscribers.Apply(NPT_ObjectDeleter<PLT_EventSubscriber>());
 
      m_ActionDescs.Clear();
      m_StateVars.Clear();
@@ -189,7 +189,7 @@ PLT_Service::SetSCPDXML(const char* scpd)
 
     // make sure root tag is right
     root = tree->AsElementNode();
-    if (!root || NPT_String::Compare(root->GetTag(), "scpd")) {
+    if (!root || NPT_String::Compare(root->GetTag(), "scpd") != 0) {
         NPT_LOG_SEVERE("Invalid scpd root tag name");
         NPT_CHECK_LABEL_SEVERE(NPT_ERROR_INVALID_SYNTAX, failure);
     }
@@ -530,7 +530,7 @@ PLT_Service::ProcessNewSubscription(PLT_TaskManager*         task_manager,
                                     int                      timeout, 
                                     NPT_HttpResponse&        response)
 {
-    NPT_LOG_FINE_1("New subscription for %s", m_EventSubURL.GetChars());
+    NPT_LOG_FINE_2("New subscription for %s (timeout = %d)", m_EventSubURL.GetChars(), timeout);
 
 //    // first look if we don't have a subscriber with same callbackURL
 //    PLT_EventSubscriber* subscriber = NULL;
@@ -558,7 +558,7 @@ PLT_Service::ProcessNewSubscription(PLT_TaskManager*         task_manager,
     PLT_UPnPMessageHelper::GenerateGUID(sid);
     sid = "uuid:" + sid;
 
-    PLT_EventSubscriber* subscriber = new PLT_EventSubscriber(task_manager, this, sid, timeout);
+    PLT_EventSubscriberReference subscriber(new PLT_EventSubscriber(task_manager, this, sid, timeout));
     // parse the callback URLs
     bool reachable = false;
     if (callback_urls[0] == '<') {
@@ -607,9 +607,10 @@ PLT_Service::ProcessNewSubscription(PLT_TaskManager*         task_manager,
 
         // schedule a recurring event notification task if not running already
         if (!m_EventTask) {
-            m_EventTask = new PLT_ServiceEventTask(this);
-			NPT_LOG_INFO("==== Starting PLT_ServiceEventTask ====");
-            task_manager->StartTask(m_EventTask);
+            PLT_ServiceEventTask *task = new PLT_ServiceEventTask(this);
+            NPT_CHECK_SEVERE(task_manager->StartTask(task));
+            
+            m_EventTask = task;
         }
 
         m_Subscribers.Add(subscriber);
@@ -619,7 +620,6 @@ PLT_Service::ProcessNewSubscription(PLT_TaskManager*         task_manager,
 
 cleanup:
     response.SetStatus(412, "Precondition Failed");
-    delete subscriber;
     return NPT_FAILURE;
 }
 
@@ -639,7 +639,7 @@ PLT_Service::ProcessRenewSubscription(const NPT_SocketAddress& addr,
         sid.GetChars());
 
     // first look if we don't have a subscriber with same callbackURL
-    PLT_EventSubscriber* subscriber = NULL;
+    PLT_EventSubscriberReference subscriber;
     if (NPT_SUCCEEDED(NPT_ContainerFind(m_Subscribers, 
                                         PLT_EventSubscriberFinderBySID(sid), 
                                         subscriber))) {
@@ -660,7 +660,6 @@ PLT_Service::ProcessRenewSubscription(const NPT_SocketAddress& addr,
         } else {
             NPT_LOG_FINE_1("Subscriber \"%s\" didn't renew in time", (const char*)subscriber->GetSID());
             m_Subscribers.Remove(subscriber);
-            delete subscriber;
         }
     }
 
@@ -682,7 +681,7 @@ PLT_Service::ProcessCancelSubscription(const NPT_SocketAddress& /* addr */,
     NPT_AutoLock lock(m_Lock);
 
     // first look if we don't have a subscriber with same callbackURL
-    PLT_EventSubscriber* sub = NULL;
+    PLT_EventSubscriberReference sub;
     if (NPT_SUCCEEDED(NPT_ContainerFind(m_Subscribers, 
                                         PLT_EventSubscriberFinderBySID(sid), 
                                         sub))) {
@@ -692,7 +691,6 @@ PLT_Service::ProcessCancelSubscription(const NPT_SocketAddress& /* addr */,
 
         // remove sub
         m_Subscribers.Remove(sub);
-        delete sub;
         return NPT_SUCCESS;
     }
 
@@ -815,9 +813,9 @@ PLT_Service::NotifyChanged()
     if (vars_ready.GetItemCount() == 0) return NPT_SUCCESS;
     
     // send vars that are ready to go and remove old subscribers 
-    NPT_List<PLT_EventSubscriber*>::Iterator sub_iter = m_Subscribers.GetFirstItem();
+    NPT_List<PLT_EventSubscriberReference>::Iterator sub_iter = m_Subscribers.GetFirstItem();
     while (sub_iter) {
-        PLT_EventSubscriber* sub = *sub_iter;
+        PLT_EventSubscriberReference sub = *sub_iter;
 
         NPT_TimeStamp now, expiration;
         NPT_System::GetCurrentTimeStamp(now);
@@ -835,7 +833,6 @@ PLT_Service::NotifyChanged()
         }
             
         m_Subscribers.Erase(sub_iter++);
-        delete sub;
     }
 
     return NPT_SUCCESS;

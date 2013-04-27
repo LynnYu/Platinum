@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -36,7 +37,7 @@
 +---------------------------------------------------------------------*/
 #include "PltAction.h"
 #include "PltService.h"
-#include "PltXmlHelper.h"
+#include "PltUtilities.h"
 
 #define REMOVE_WMP_DATATYPE_EXTENSION
 
@@ -480,8 +481,8 @@ PLT_Action::FormatSoapError(unsigned int code, NPT_String desc, NPT_OutputStream
     fault = new NPT_XmlElementNode("s", "Fault");
     NPT_CHECK_LABEL_SEVERE(res = body->AddChild(fault), cleanup);
 
-    NPT_CHECK_LABEL_SEVERE(res = PLT_XmlHelper::AddChildText(fault, "faultCode", "s:Client"), cleanup);
-    NPT_CHECK_LABEL_SEVERE(res = PLT_XmlHelper::AddChildText(fault, "faultString", "UPnPError"), cleanup);
+    NPT_CHECK_LABEL_SEVERE(res = PLT_XmlHelper::AddChildText(fault, "faultcode", "s:Client"), cleanup);
+    NPT_CHECK_LABEL_SEVERE(res = PLT_XmlHelper::AddChildText(fault, "faultstring", "UPnPError"), cleanup);
 
     detail = new NPT_XmlElementNode("detail");
     NPT_CHECK_LABEL_SEVERE(res = fault->AddChild(detail), cleanup);

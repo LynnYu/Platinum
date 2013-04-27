@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -359,22 +360,22 @@ protected:
     friend class PLT_DeviceHost;    // ProcessXXSubscription
     
     //members
-    PLT_DeviceData*                 m_Device;
-    NPT_String                      m_ServiceType;
-    NPT_String                      m_ServiceID;
-	NPT_String						m_ServiceName;
-    NPT_String                      m_SCPDURL;
-    NPT_String                      m_ControlURL;
-    NPT_String                      m_EventSubURL;
-    PLT_ServiceEventTask*           m_EventTask;
-    NPT_Array<PLT_ActionDesc*>      m_ActionDescs;
-    NPT_List<PLT_StateVariable*>    m_StateVars;
-    NPT_Mutex                       m_Lock;
-    NPT_List<PLT_StateVariable*>    m_StateVarsChanged;
-    NPT_List<PLT_StateVariable*>    m_StateVarsToPublish;
-    NPT_List<PLT_EventSubscriber*>  m_Subscribers;
-    bool                            m_EventingPaused;
-    NPT_String                      m_LastChangeNamespace;
+    PLT_DeviceData*                         m_Device;
+    NPT_String                              m_ServiceType;
+    NPT_String                              m_ServiceID;
+	NPT_String                              m_ServiceName;
+    NPT_String                              m_SCPDURL;
+    NPT_String                              m_ControlURL;
+    NPT_String                              m_EventSubURL;
+    PLT_ServiceEventTask*                   m_EventTask;
+    NPT_Array<PLT_ActionDesc*>              m_ActionDescs;
+    NPT_List<PLT_StateVariable*>            m_StateVars;
+    NPT_Mutex                               m_Lock;
+    NPT_List<PLT_StateVariable*>            m_StateVarsChanged;
+    NPT_List<PLT_StateVariable*>            m_StateVarsToPublish;
+    NPT_List<PLT_EventSubscriberReference>  m_Subscribers;
+    bool                                    m_EventingPaused;
+    NPT_String                              m_LastChangeNamespace;
 };
 
 /*----------------------------------------------------------------------

@@ -113,7 +113,9 @@ int x509_new(const uint8_t *cert, int *len, X509_CTX **ctx)
             asn1_validity(cert, &offset, x509_ctx) ||
             asn1_name(cert, &offset, x509_ctx->cert_dn) ||
             asn1_public_key(cert, &offset, x509_ctx))
+    {
         goto end_cert;
+    }
 
     bi_ctx = x509_ctx->rsa_ctx->bi_ctx;
 
@@ -136,6 +138,12 @@ int x509_new(const uint8_t *cert, int *len, X509_CTX **ctx)
         SHA1_Update(&sha_ctx, &cert[begin_tbs], end_tbs-begin_tbs);
         SHA1_Final(sha_dgst, &sha_ctx);
         x509_ctx->digest = bi_import(bi_ctx, sha_dgst, SHA1_SIZE);
+    }
+    else if (x509_ctx->sig_type == SIG_TYPE_SHA256)
+    {
+        uint8_t sha_dgst[SHA256_SIZE];
+        SSL_Sha256_ComputeDigest(&cert[begin_tbs], end_tbs-begin_tbs, sha_dgst);
+        x509_ctx->digest = bi_import(bi_ctx, sha_dgst, SHA256_SIZE);
     }
     else if (x509_ctx->sig_type == SIG_TYPE_MD2)
     {
@@ -197,8 +205,7 @@ int x509_new(const uint8_t *cert, int *len, X509_CTX **ctx)
     if (asn1_skip_obj(cert, &offset, ASN1_SEQUENCE) || 
             asn1_signature(cert, &offset, x509_ctx))
         goto end_cert;
-#endif
-
+        
     /* GBG: compute the fingerprints */
     {
         MD5_CTX md5_ctx;
@@ -213,21 +220,24 @@ int x509_new(const uint8_t *cert, int *len, X509_CTX **ctx)
         SHA1_Final(x509_ctx->fingerprint.sha1, &sha1_ctx);
     }
     /* /GBG: compute the fingerprints */
-    
+        
+#endif
+    ret = X509_OK;
+end_cert:
     if (len)
     {
         *len = cert_size;
     }
 
-    ret = X509_OK;
-end_cert:
-
-#ifdef CONFIG_SSL_FULL_MODE
     if (ret)
     {
-        printf("Error: Invalid X509 ASN.1 file\n");
-    }
+#ifdef CONFIG_SSL_FULL_MODE
+        printf("Error: Invalid X509 ASN.1 file (%s)\n",
+                        x509_display_error(ret));
 #endif
+        x509_free(x509_ctx);
+        *ctx = NULL;
+    }
 
     return ret;
 }
@@ -249,7 +259,6 @@ void x509_free(X509_CTX *x509_ctx)
         free(x509_ctx->cert_dn[i]);
     }
 
-
     free(x509_ctx->signature);
 
 #ifdef CONFIG_SSL_CERT_VERIFICATION 
@@ -268,7 +277,6 @@ void x509_free(X509_CTX *x509_ctx)
 #endif
 
     RSA_free(x509_ctx->rsa_ctx);
-
     next = x509_ctx->next;
     free(x509_ctx);
     x509_free(next);        /* clear the chain */
@@ -328,9 +336,9 @@ static bigint *sig_verify(BI_CTX *ctx, const uint8_t *sig, int sig_len,
  * - The certificate chain is valid.
  * - The signature of the certificate is valid.
  */
-int x509_verify(const CA_CERT_CTX *ca_cert_ctx, const X509_CTX *cert, const SSL_DateTime* now) 
+int x509_verify(X509_CTX* ca_certs /* GBG: changed */, const X509_CTX *cert, const SSL_DateTime* now) 
 {
-    int ret = X509_OK, i = 0;
+    int ret = X509_OK;
     bigint *cert_sig;
     X509_CTX *next_cert = NULL;
     BI_CTX *ctx = NULL;
@@ -380,24 +388,18 @@ int x509_verify(const CA_CERT_CTX *ca_cert_ctx, const X509_CTX *cert, const SSL_
     /* last cert in the chain - look for a trusted cert */
     if (next_cert == NULL)
     {
-       if (ca_cert_ctx != NULL) 
-       {
-            /* go thu the CA store */
-           while (i < CONFIG_X509_MAX_CA_CERTS && ca_cert_ctx->cert[i])
-            {
-                if (asn1_compare_dn(cert->ca_cert_dn,
-                                            ca_cert_ctx->cert[i]->cert_dn) == 0)
-                {
-                    /* use this CA certificate for signature verification */
-                    match_ca_cert = 1;
-                    ctx = ca_cert_ctx->cert[i]->rsa_ctx->bi_ctx;
-                    mod = ca_cert_ctx->cert[i]->rsa_ctx->m;
-                    expn = ca_cert_ctx->cert[i]->rsa_ctx->e;
-                    break;
-                }
-
-                i++;
+        /* GBG: modified */
+        X509_CTX* ca_cert = ca_certs;
+        while (ca_cert) {
+            if (asn1_compare_dn(cert->ca_cert_dn, ca_cert->cert_dn) == 0) {
+                /* use this CA certificate for signature verification */
+                match_ca_cert = 1;
+                ctx  = ca_cert->rsa_ctx->bi_ctx;
+                mod  = ca_cert->rsa_ctx->m;
+                expn = ca_cert->rsa_ctx->e;
+                break;
             }
+            ca_cert = ca_cert->next;
         }
 
        /* couldn't find a trusted cert (& let self-signed errors be returned) */
@@ -450,7 +452,7 @@ int x509_verify(const CA_CERT_CTX *ca_cert_ctx, const X509_CTX *cert, const SSL_
     /* go down the certificate chain using recursion. */
     if (next_cert != NULL)
     {
-        ret = x509_verify(ca_cert_ctx, next_cert, now);
+        ret = x509_verify(ca_certs, next_cert, now);
     }
 
 end_verify:

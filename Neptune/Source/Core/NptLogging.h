@@ -69,7 +69,10 @@ public:
 
 class NPT_LogHandler {
 public:
+    typedef void(*CustomHandlerExternalFunction)(const NPT_LogRecord* record);
+    
     // class methods
+    static NPT_Result SetCustomHandlerFunction(CustomHandlerExternalFunction function);
     static NPT_Result Create(const char*      logger_name,
                              const char*      handler_name,
                              NPT_LogHandler*& handler);
@@ -108,8 +111,8 @@ private:
     bool                      m_LevelIsInherited;
     bool                      m_ForwardToParent;
     NPT_Logger*               m_Parent;
-	NPT_List<NPT_LogHandler*> m_Handlers;
-	NPT_List<NPT_LogHandler*> m_ExternalHandlers;
+    NPT_List<NPT_LogHandler*> m_Handlers;
+    NPT_List<NPT_LogHandler*> m_ExternalHandlers;
 
     // friends
     friend class NPT_LogManager;
@@ -154,11 +157,11 @@ public:
     NPT_Result                    Configure(const char* config_sources = NULL);
     NPT_String*                   GetConfigValue(const char* prefix, const char* suffix);
     NPT_List<NPT_Logger*>&        GetLoggers() { return m_Loggers; }
-	NPT_List<NPT_LogConfigEntry>& GetConfig()  { return m_Config;  }
-	void SetEnabled(bool enabled) { m_Enabled = enabled; }
-    bool IsEnabled()              { return m_Enabled;    }
-    void Lock()   { m_Lock.Lock();   }
-    void Unlock() { m_Lock.Unlock(); }
+    NPT_List<NPT_LogConfigEntry>& GetConfig()  { return m_Config;  }
+    void                          SetEnabled(bool enabled) { m_Enabled = enabled; }
+    bool                          IsEnabled()              { return m_Enabled;    }
+    void                          Lock();
+    void                          Unlock();
 
 private:
     // methods
@@ -172,6 +175,7 @@ private:
 
     // members
     NPT_Mutex                    m_Lock;
+    NPT_Thread::ThreadId         m_LockOwner;
     bool                         m_Enabled;
     bool                         m_Configured;
     NPT_List<NPT_LogConfigEntry> m_Config;

@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -62,10 +63,10 @@ public:
     /**
      Create a new Task Manager.
      @param max_items Maximum number of concurrent tasks that the task manager
-     will allow. When the value is reached, any new task are put on hold until
+     will allow. When the value is reached, a thread calling AddTask will block until
      a task has finished.
      */
-	PLT_TaskManager(NPT_Cardinal max_items = 0);
+	PLT_TaskManager(NPT_Cardinal max_tasks = 0);
 	virtual ~PLT_TaskManager();
 
     /**
@@ -84,6 +85,11 @@ public:
      */
     NPT_Result StopAllTasks();
 
+    /**
+     Returns the max number of concurrent tasks allowed. 0 for no limit.
+     */
+    NPT_Cardinal GetMaxTasks() { return m_MaxTasks; }
+
 private:
     friend class PLT_ThreadTask;
 
@@ -98,6 +104,7 @@ private:
     NPT_Queue<int>*            m_Queue;
     NPT_Cardinal               m_MaxTasks;
     NPT_Cardinal               m_RunningTasks;
+    bool                       m_Stopping;
 };
 
 #endif /* _PLT_TASKMANAGER_H_ */

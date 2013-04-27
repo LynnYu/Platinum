@@ -17,7 +17,8 @@
 | licensed software under version 2, or (at your option) any later
 | version, of the GNU General Public License (the "GPL") must enter
 | into a commercial license agreement with Plutinosoft, LLC.
-| 
+| licensing@plutinosoft.com
+|  
 | This program is distributed in the hope that it will be useful,
 | but WITHOUT ANY WARRANTY; without even the implied warranty of
 | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -59,9 +60,28 @@ public:
     PLT_Constants();
     ~PLT_Constants() {};
     
+    void SetDefaultDeviceLease(NPT_TimeInterval lease) { m_DefaultDeviceLease = new NPT_TimeInterval(lease); }
+    NPT_Reference<NPT_TimeInterval> GetDefaultDeviceLease() { return m_DefaultDeviceLease; }
+  
+    void SetDefaultSubscribeLease(NPT_TimeInterval lease) { m_DefaultSubscribeLease = new NPT_TimeInterval(lease); }
+    NPT_Reference<NPT_TimeInterval> GetDefaultSubscribeLease() { return m_DefaultSubscribeLease; }
+    
+    void SetDefaultUserAgent(const char* agent) { m_DefaultUserAgent = new NPT_String(agent); }
+    NPT_Reference<NPT_String> GetDefaultUserAgent() { return m_DefaultUserAgent; }
+    
+    void SetSearchMulticastTimeToLive(NPT_UInt32 ttl) { m_SearchMulticastTimeToLive = ttl; }
+    NPT_UInt32 GetSearchMulticastTimeToLive() { return m_SearchMulticastTimeToLive; }
+
+    void SetAnnounceMulticastTimeToLive(NPT_UInt32 ttl) { m_AnnounceMulticastTimeToLive = ttl; }
+    NPT_UInt32 GetAnnounceMulticastTimeToLive() { return m_AnnounceMulticastTimeToLive; }
+
+private:
     // members
-    NPT_TimeInterval m_DefaultDeviceLease;
-    NPT_TimeInterval m_DefaultSubscribeLease;
+    NPT_Reference<NPT_TimeInterval> m_DefaultDeviceLease;
+    NPT_Reference<NPT_TimeInterval> m_DefaultSubscribeLease;
+    NPT_Reference<NPT_String>       m_DefaultUserAgent;
+    NPT_UInt32                      m_SearchMulticastTimeToLive;
+    NPT_UInt32                      m_AnnounceMulticastTimeToLive;
 };
 
 #endif /* _PLT_UPNP_CONSTANTS_H_ */
