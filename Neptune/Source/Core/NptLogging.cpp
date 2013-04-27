@@ -939,6 +939,7 @@ NPT_Logger::Log(int          level,
 
     /* format the message */
     char     buffer[NPT_LOG_STACK_BUFFER_MAX_SIZE];
+	//memset(buffer, 0, sizeof(buffer));
     NPT_Size buffer_size = sizeof(buffer);
     char*    message = buffer;
     int      result;        
