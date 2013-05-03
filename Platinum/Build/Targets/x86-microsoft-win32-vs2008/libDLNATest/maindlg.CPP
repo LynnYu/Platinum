@@ -92,16 +92,18 @@ LRESULT CMainDlg::OnBnClickedBtnOpen(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*
 // 
 // 	m_strFilePath = dlg.m_ofn.lpstrFile;
 
-	m_strFilePath = _T("Z:\\Shared\\Media\\2013Oscar.mp4");
+	//m_strFilePath = _T("Z:\\Shared\\Media\\2013Oscar.mp4");
 
-	ATL::CStringA path(m_strFilePath);
+	//ATL::CStringA path(m_strFilePath);
 
+	const char* path = "π¶∑Ú–‹√®2[≥¨«Â∞Ê]";
 
 	CComboBox combox(GetDlgItem(IDC_COMBO_MEDIARENDERERS));
 
 	if (0 == DLNA_ChooseDevice(combox.GetCurSel()))
 	{
-		DLNA_Open(path, DLNA_FILE_LOCAL);
+		//DLNA_Open(path, DLNA_FILE_LOCAL);
+		DLNA_Open(path, DLNA_FILE_ONLINE);
 	}
 
 	return 0;
@@ -139,6 +141,17 @@ LRESULT CMainDlg::OnBnClickedBtnStop(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*
 	// TODO: Add your control notification handler code here
 
 	DLNA_Stop();
+
+	return 0;
+}
+
+LRESULT CMainDlg::OnBnClickedBtnSeek(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	// TODO: Add your control notification handler code here
+	
+// 	ATL::CString time_pos;
+// 	GetDlgItemText(IDC_EDT_SEEKTIME, time_pos);
+	//DLNA_Seek();
 
 	return 0;
 }

@@ -67,9 +67,9 @@ LIBDLNA_API int DLNA_Play() {
 	return 0;
 }
 
-LIBDLNA_API int	DLNA_Seek(long pos /* ms */) {
+LIBDLNA_API int	DLNA_Seek(const char* time_pos/*long pos*/ /* ms */) {
 	if (g_spDLNA) {
-		return g_spDLNA->Seek(pos);
+		return g_spDLNA->Seek(time_pos);
 	}
 	return 0;
 }

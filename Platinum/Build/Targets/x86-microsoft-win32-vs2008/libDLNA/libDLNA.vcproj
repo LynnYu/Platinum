@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\..\..\..\Neptune\Source\Core;..\..\..\..\Source\Platinum;..\..\..\..\Source\Core;..\..\..\..\Source\Extras;..\..\..\..\Source\Devices\MediaServer;..\..\..\..\Source\Devices\MediaRenderer;..\..\..\..\Source\Devices\MediaConnect"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBDLNA_EXPORTS;NPT_CONFIG_ENABLE_LOGGING"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBDLNA_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -267,12 +267,56 @@
 				RelativePath=".\targetver.h"
 				>
 			</File>
-			<Filter
-				Name="Resource Files"
-				Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-				UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+			>
+		</Filter>
+		<Filter
+			Name="MP4Merge"
+			>
+			<File
+				RelativePath=".\MP4Merge\Common.h"
 				>
-			</Filter>
+			</File>
+			<File
+				RelativePath=".\MP4Merge\FlyfoxStreamCtrl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MP4Merge\FlyfoxStreamCtrl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MP4Merge\P2PRead.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MP4Merge\P2PRead.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MP4Merge\QtHeaderAnalyze.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MP4Merge\QtHeaderAnalyze.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MP4Merge\QtSequenceMerge.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MP4Merge\QtSequenceMerge.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MP4Merge\QtStructDef.h"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"

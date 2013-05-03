@@ -97,6 +97,8 @@ int main(void)
     // add device
     upnp.AddDevice(server);
 
+	server->GetPort();
+
     // remove device uuid from ctrlpoint
 	upnp.SetIgnoreLocalUUIDs(false);
     //ctrlPoint->IgnoreUUID(server->GetUUID());

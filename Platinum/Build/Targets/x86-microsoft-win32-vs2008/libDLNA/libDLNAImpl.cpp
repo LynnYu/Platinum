@@ -3,12 +3,15 @@
 
 #include "FlyfoxMediaServer.h"
 #include "FlyfoxMediaController.h"
+#include "MP4Merge/FlyfoxStreamCtrl.h"
 
 #define IP_LOCAL_HOST	"127.0.0.1"
 
-NPT_SET_LOCAL_LOGGER("libdlna.libdlnaimpl")
+//NPT_SET_LOCAL_LOGGER("libdlna.libdlnaimpl")
 
 IOCallbacks* CLibDLNA::m_spIO = NULL;
+
+CFlyfoxStreamCtrl* CLibDLNA::m_StreamCtrl = NULL;
 
 /*----------------------------------------------------------------------
 |   CLibDLNA::CLibDLNA
@@ -26,7 +29,7 @@ CLibDLNA::CLibDLNA()
 +---------------------------------------------------------------------*/
 CLibDLNA::~CLibDLNA()
 {
-
+	Uninit();
 }
 
 /*----------------------------------------------------------------------
@@ -55,7 +58,7 @@ NPT_Result CLibDLNA::Init()
 	m_UPnP->AddCtrlPoint(ctrlPoint);
 	m_UPnP->Start();
 
-
+	m_StreamCtrl = new CFlyfoxStreamCtrl;
 
 	return NPT_SUCCESS;
 }
@@ -74,6 +77,11 @@ NPT_Result CLibDLNA::Uninit()
 		m_MediaController = NULL;
 	}
 
+	if (m_StreamCtrl)
+	{
+		delete m_StreamCtrl;
+		m_StreamCtrl = NULL;
+	}
 	return NPT_SUCCESS;
 }
 
@@ -120,9 +128,9 @@ NPT_Result CLibDLNA::Open(const char* url, int file_type)
 			//http_url = NPT_String::Format("http://%s:%s/%s?type=%d", ip, port, name, type);
 
 			NPT_HttpUrl base_uri(IP_LOCAL_HOST, port, NPT_HttpUrl::PercentEncode("/", NPT_Uri::PathCharsToEncode));
-			http_url = CFlyfoxMediaServerDelegate::BuildSafeResourceUri(base_uri, ip, url, file_type);
+			http_url = CFlyfoxMediaServerDelegate::BuildSafeResourceUri(base_uri, ip, /*url*/url, file_type);
 
-			NPT_LOG_INFO("SetAVTransportURI http_url=%s", http_url.GetChars());
+			NPT_LOG_INFO("SetAVTransportURI http_url=%s");//, http_url.GetChars());
 			result = m_MediaController->SetAVTransportURI(device, 0, http_url/*url*/, "", NULL);
 		}
 	}
@@ -188,19 +196,16 @@ NPT_Result CLibDLNA::Stop()
 /*----------------------------------------------------------------------
 |   
 +---------------------------------------------------------------------*/
-NPT_Result CLibDLNA::Seek(long play_pos_ms)
+NPT_Result CLibDLNA::Seek(const char* time_pos/*long play_pos_ms*/)
 {
 	if (m_MediaController)
 	{
 		PLT_DeviceDataReference device;
 		m_MediaController->GetCurMediaRenderer(device);
-		if (!device.IsNull()) {
-
-			// TODO: format play pos to REL_TIME
-			NPT_String target = NPT_String::FromInteger(play_pos_ms);
-
-
-			m_MediaController->Seek(device, 0, (target.Find(":")!=-1)?"REL_TIME":"X_DLNA_REL_BYTE", target, NULL);
+		if (!device.IsNull()) 
+		{
+			NPT_String target(time_pos);
+			m_MediaController->Seek(device, 0, "REL_TIME", target, NULL);
 		}
 	}
 	return NPT_SUCCESS;

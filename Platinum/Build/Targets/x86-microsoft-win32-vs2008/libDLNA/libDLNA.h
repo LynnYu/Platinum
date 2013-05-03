@@ -43,7 +43,7 @@ LIBDLNA_API int		DLNA_ChooseDevice(int device_index);
 LIBDLNA_API int		DLNA_Open(const char* url, int type = DLNA_FILE_LOCAL);
 LIBDLNA_API	int		DLNA_Close();
 LIBDLNA_API int		DLNA_Play();
-LIBDLNA_API int		DLNA_Seek(long pos /* ms */);
+LIBDLNA_API int		DLNA_Seek(const char* time_pos/*long pos*/ /* ms */);
 LIBDLNA_API int		DLNA_Pause();
 LIBDLNA_API int		DLNA_Stop();
 LIBDLNA_API int		DLNA_SetVolume(int volume);

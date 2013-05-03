@@ -44,6 +44,7 @@ public:
 		COMMAND_HANDLER(IDC_BTN_PLAY, BN_CLICKED, OnBnClickedBtnPlay)
 		COMMAND_HANDLER(IDC_BTN_PAUSE, BN_CLICKED, OnBnClickedBtnPause)
 		COMMAND_HANDLER(IDC_BTN_STOP, BN_CLICKED, OnBnClickedBtnStop)
+		COMMAND_HANDLER(IDC_BTN_SEEK, BN_CLICKED, OnBnClickedBtnSeek)
 	END_MSG_MAP()
 
 // Handler prototypes (uncomment arguments if needed):
@@ -151,4 +152,5 @@ public:
 	LRESULT OnBnClickedBtnPlay(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnBnClickedBtnPause(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnBnClickedBtnStop(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnBnClickedBtnSeek(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };

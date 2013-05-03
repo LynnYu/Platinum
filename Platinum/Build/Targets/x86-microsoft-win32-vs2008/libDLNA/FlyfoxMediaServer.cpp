@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "FlyfoxMediaServer.h"
 
-NPT_SET_LOCAL_LOGGER("libdlna.flyfoxmediaserver")
+//NPT_SET_LOCAL_LOGGER("libdlna.flyfoxmediaserver")
 
 static NPT_File* s_pFile = NULL;
 
@@ -107,8 +107,8 @@ CFlyfoxMediaServerDelegate::ProcessFileRequest(NPT_HttpRequest&              req
 {
 	NPT_InputStreamReference stream;
 	NPT_HttpUrlQuery query(request.GetUrl().GetQuery());
-	CFlyfoxFileStream file_stream(CLibDLNA::GetIOCallbacks());
 	int file_type = DLNA_FILE_UNKNOWN;	
+	PLT_HttpRequestContext tmp_context(request, context);
 
 	PLT_LOG_HTTP_MESSAGE(NPT_LOG_LEVEL_FINE, "CFlyfoxMediaServerDelegate::ProcessFileRequest:", &request);
 
@@ -119,37 +119,44 @@ CFlyfoxMediaServerDelegate::ProcessFileRequest(NPT_HttpRequest&              req
 
 	/* Extract file path and file type from url */
 	NPT_String file_path;
-	NPT_CHECK_LABEL_WARNING(ExtractResourcePath(request.GetUrl(), file_path), failure);
-	NPT_LOG_INFO_1("ExtractResourcePath file_path=%s", file_path);
+	/*NPT_CHECK_LABEL_WARNING(*/
+	if (NPT_FAILED(ExtractResourcePath(request.GetUrl(), file_path)))
+		goto failure;
 	NPT_ParseInteger(query.GetField("type"), file_type);
-	NPT_CHECK_LABEL_SEVERE(file_stream.Open(file_path, file_type), failure);
-	NPT_CHECK_WARNING(ServeFileStream(request, context, response, file_stream));
-	return NPT_SUCCESS;
+
+	file_path = "¹¦·òÐÜÃ¨2[³¬Çå°æ]";
+	//file_path = "Z:\\Shared\\Media\\2013Oscar.mp4";
+
+	stream = new CFlyfoxFileInputStream(file_path, file_type/*, CLibDLNA::GetStreamCtrl()*//*CLibDLNA::GetIOCallbacks()*/);
+// 	if (NPT_FAILED((stream)->Open(file_path, file_type)))
+// 		goto failure;
+
+	return ServeStream(request, context, response, stream, PLT_MimeType::GetMimeType(file_path, &tmp_context));
 
 failure:
 	response.SetStatus(404, "File Not Found");
 	return NPT_SUCCESS;
 }
 
-/*----------------------------------------------------------------------
-|   CFlyfoxMediaServerDelegate::ServeFileStream
-+---------------------------------------------------------------------*/
-NPT_Result 
-CFlyfoxMediaServerDelegate::ServeFileStream(const NPT_HttpRequest&		request, 
-											const NPT_HttpRequestContext&	context,
-											NPT_HttpResponse&				response,
-											CFlyfoxFileStream&				file_stream)
-{
-	// open file stream
-	NPT_InputStreamReference body;
-	if (NPT_FAILED(file_stream.GetInputStream(body))        ||
-		body.IsNull()) {
-			return NPT_ERROR_NO_SUCH_ITEM;
-	}
-
-	PLT_HttpRequestContext tmp_context(request, context);
-	return ServeStream(request, context, response, body, PLT_MimeType::GetMimeType(file_stream.GetPath(), &tmp_context));
-}
+// /*----------------------------------------------------------------------
+// |   CFlyfoxMediaServerDelegate::ServeFileStream
+// +---------------------------------------------------------------------*/
+// NPT_Result 
+// CFlyfoxMediaServerDelegate::ServeFileStream(const NPT_HttpRequest&		request, 
+// 											const NPT_HttpRequestContext&	context,
+// 											NPT_HttpResponse&				response,
+// 											CFlyfoxFileStream&			file_stream)
+// {
+// 	// open file stream
+// 	NPT_InputStreamReference stream;
+// 	if (NPT_FAILED(file_stream.GetInputStream(stream))        ||
+// 		stream.IsNull()) {
+// 			return NPT_ERROR_NO_SUCH_ITEM;
+// 	}
+// 
+// 	PLT_HttpRequestContext tmp_context(request, context);
+// 	return ServeStream(request, context, response, stream, PLT_MimeType::GetMimeType(file_stream.GetPath(), &tmp_context));
+// }
 
 /*----------------------------------------------------------------------
 |   CFlyfoxMediaServerDelegate::ServeStream
@@ -283,8 +290,9 @@ NPT_Result CFlyfoxMediaServerDelegate::ExtractResourcePath(const NPT_HttpUrl&	ur
 		if (file_path.StartsWith("%25/")) file_path.Erase(0, 4);
 
 		/* ok to urldecode */
-		file_path = NPT_Uri::PercentDecode(file_path);
+		//file_path = NPT_Uri::PercentDecode(file_path);
 	}
+	file_path = NPT_Uri::PercentDecode(file_path);
 
 	return NPT_SUCCESS;
 }

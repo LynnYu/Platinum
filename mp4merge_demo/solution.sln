@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CustomMerge", "CustomMerge\CustomMerge.vcproj", "{E06ECAE8-E5FD-445E-B465-AA0954390D60}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CDNServer", "CDNServer\CDNServer.vcproj", "{D0B80FD3-F613-4BBD-9158-4C873F49AE54}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "P2PServer", "P2PServer\P2PServer.vcproj", "{C773FF55-04E9-48CA-94E6-34B1560FB3B0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LocalServer", "LocalServer\LocalServer.vcproj", "{C6D532D0-FA3E-480C-B47B-19CB1CDCA717}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E06ECAE8-E5FD-445E-B465-AA0954390D60}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E06ECAE8-E5FD-445E-B465-AA0954390D60}.Debug|Win32.Build.0 = Debug|Win32
+		{E06ECAE8-E5FD-445E-B465-AA0954390D60}.Release|Win32.ActiveCfg = Release|Win32
+		{E06ECAE8-E5FD-445E-B465-AA0954390D60}.Release|Win32.Build.0 = Release|Win32
+		{D0B80FD3-F613-4BBD-9158-4C873F49AE54}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D0B80FD3-F613-4BBD-9158-4C873F49AE54}.Debug|Win32.Build.0 = Debug|Win32
+		{D0B80FD3-F613-4BBD-9158-4C873F49AE54}.Release|Win32.ActiveCfg = Release|Win32
+		{D0B80FD3-F613-4BBD-9158-4C873F49AE54}.Release|Win32.Build.0 = Release|Win32
+		{C773FF55-04E9-48CA-94E6-34B1560FB3B0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C773FF55-04E9-48CA-94E6-34B1560FB3B0}.Debug|Win32.Build.0 = Debug|Win32
+		{C773FF55-04E9-48CA-94E6-34B1560FB3B0}.Release|Win32.ActiveCfg = Release|Win32
+		{C773FF55-04E9-48CA-94E6-34B1560FB3B0}.Release|Win32.Build.0 = Release|Win32
+		{C6D532D0-FA3E-480C-B47B-19CB1CDCA717}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C6D532D0-FA3E-480C-B47B-19CB1CDCA717}.Debug|Win32.Build.0 = Debug|Win32
+		{C6D532D0-FA3E-480C-B47B-19CB1CDCA717}.Release|Win32.ActiveCfg = Release|Win32
+		{C6D532D0-FA3E-480C-B47B-19CB1CDCA717}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

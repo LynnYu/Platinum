@@ -9,6 +9,7 @@
 typedef NPT_Reference<PLT_UPnP>		PLT_UPnPReference;
 
 class CFlyfoxMediaController;
+class CFlyfoxStreamCtrl;
 
 class CLibDLNA
 {
@@ -26,7 +27,7 @@ public:
 	NPT_Result Play();
 	NPT_Result Pause();
 	NPT_Result Stop();
-	NPT_Result Seek(long pos);
+	NPT_Result Seek(const char* time_pos/*long pos*/);
 
 	NPT_Result GetVolume(int* volume);
 	NPT_Result SetVolume(int volume);
@@ -38,6 +39,10 @@ public:
 		return m_spIO;
 	}
 
+	static CFlyfoxStreamCtrl* GetStreamCtrl() {
+		return m_StreamCtrl;
+	}
+
 private:
 	PLT_UPnPReference					m_UPnP;
 	CFlyfoxMediaController*				m_MediaController;
@@ -45,6 +50,8 @@ private:
 	//NPT_List<PLT_DeviceHostReference>   m_Devices;
 
 	static IOCallbacks*					m_spIO;
+
+	static CFlyfoxStreamCtrl*			m_StreamCtrl;
 };
 
 #endif

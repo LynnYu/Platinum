@@ -45,10 +45,10 @@ protected:
 		const NPT_HttpRequestContext& context,
 		NPT_HttpResponse&             response);
 
-	virtual NPT_Result ServeFileStream(const NPT_HttpRequest&        request, 
-		const NPT_HttpRequestContext& context,
-		NPT_HttpResponse&             response,
-		CFlyfoxFileStream&			  stream);
+// 	virtual NPT_Result ServeFileStream(const NPT_HttpRequest&        request, 
+// 		const NPT_HttpRequestContext& context,
+// 		NPT_HttpResponse&             response,
+// 		CFlyfoxFileStream&	  stream);
 
 	virtual NPT_Result ServeStream(const NPT_HttpRequest&        request, 
 		const NPT_HttpRequestContext& context,
